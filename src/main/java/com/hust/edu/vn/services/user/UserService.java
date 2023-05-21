@@ -3,6 +3,7 @@ package com.hust.edu.vn.services.user;
 import com.hust.edu.vn.model.ChangePasswordModel;
 import com.hust.edu.vn.model.RecoveryPasswordModel;
 import com.hust.edu.vn.model.UserModel;
+import org.springframework.web.multipart.MultipartFile;
 
 
 public interface UserService {
@@ -16,4 +17,5 @@ public interface UserService {
     boolean recoveryPassword(String token, RecoveryPasswordModel recoveryPasswordModel);
 
     boolean changePassword(ChangePasswordModel recoveryPasswordModel);
+
 }

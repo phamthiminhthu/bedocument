@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.Date;
@@ -19,7 +20,7 @@ public class ProfilePrivateModel {
    private String email;
    @NotBlank
    private String username;
-   private String image;
+   private MultipartFile avatar;
    private String phone;
    private String address;
    private LocalDate birthday;

@@ -14,8 +14,6 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private static final String[] WHITE_LIST_URLS = {
             "/api/v1/auth/**",
-            "/api/v1/user/**",
-            "/api/v1/management/document/**"
     };
 
 

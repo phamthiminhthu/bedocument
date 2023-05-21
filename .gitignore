@@ -26,6 +26,7 @@ buildSrc/build
 /integration-tests/build
 /src/asciidoc/build
 spring-test/test-output/
+.env
 
 # Maven artifacts
 pom.xml

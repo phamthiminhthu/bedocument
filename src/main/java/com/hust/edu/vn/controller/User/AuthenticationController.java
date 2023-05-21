@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -99,6 +100,35 @@ public class AuthenticationController {
         boolean status = userService.changePassword(changePasswordModel);
         return CustomResponse.generateResponse(status);
     }
+
+    private final String BASE_URL = "https://api.crossref.org";
+
+    record TestCheck(String query, int maxResults){
+        public String getQuery(){
+            return query;
+        }
+        public int getMaxResults(){
+            return maxResults;
+        }
+    }
+//    @GetMapping("/test")
+//    public ResponseEntity<CustomResponse> search(@ModelAttribute TestCheck test)  {
+//        String url = BASE_URL + "/works?query=" + test.getQuery() + "&rows=" + test.getMaxResults();
+//
+//        RestTemplate restTemplate = new RestTemplate();
+//        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+//
+//        if (response.getStatusCode() == HttpStatus.OK) {
+//            // Xử lý kết quả tìm kiếm ở đây;
+//            Gson gson = new Gson();
+//            Object jsonObject = gson.fromJson(response.getBody(), Object.class);
+//            String jsonInString = gson.toJson(jsonObject);
+//            System.out.println(jsonInString);
+//            return CustomResponse.generateResponse(HttpStatus.OK, "done", jsonObject);
+//        }
+//        System.out.println("Không thể tìm kiếm bằng CrossRef API.");
+//        return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST);
+//    }
 
 
 

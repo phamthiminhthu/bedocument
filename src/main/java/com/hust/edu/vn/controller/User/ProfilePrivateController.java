@@ -31,11 +31,10 @@ public class ProfilePrivateController {
         return CustomResponse.generateResponse(HttpStatus.FOUND, "User exists", profileModel);
     }
 
-    @PostMapping("profile/{id}")
+    @PostMapping("update/{id}")
     public ResponseEntity<CustomResponse> updateProfile(@PathVariable Long id, @ModelAttribute ProfilePrivateModel profilePrivateModel){
         boolean status = profilePrivateService.updateProfile(id, profilePrivateModel);
         if(status) return CustomResponse.generateResponse(HttpStatus.OK, "Update user successfully");
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Update user failed");
     }
-
 }

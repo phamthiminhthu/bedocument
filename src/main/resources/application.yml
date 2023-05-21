@@ -1,18 +1,19 @@
 server:
-    port: 8080
+    port: ${SERVER_PORT}
 spring:
+    config:
+        import: optional:file:.env[.properties]
     datasource:
-        driverClassName: com.mysql.cj.jdbc.Driver
-        url: jdbc:mysql://localhost:3306/document
+        driverClassName: ${DRIVER_CLASSNAME}
+        url: ${DB_URL}
         username: ${DB_NAME}
         password: ${DB_PASSWORD}
-        driver-class-name: com.mysql.cj.jdbc.Driver
     jpa:
         hibernate:
             ddl-auto: update
         show-sql: true
     mail:
-        host: smtp.office365.com
+        host: ${MAIL_HOST}
         port: 587
         username: ${EMAIL_USERNAME}
         password: ${EMAIL_PASSWORD}
@@ -23,10 +24,19 @@ spring:
                         enable: true
                         required: true
                     ssl:
-                        trust: smtp.office365.com
+                        trust: ${MAIL_HOST}
+    servlet:
+        multipart:
+            max-file-size: ${MAX_FILE-SIZE}
+            max-request-size: ${MAX_REQUEST_SIZE}
 
 amazonProperties:
-    endpointUrl: https://s3.us-east-2.amazonaws.com
-    accessKey: AKIAWAFVB6T3BZW7HYBG
-    secretKey: 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
-    bucketName: bedocument
+    endpointUrl: ${ENDPOINT_URL}
+    accessKey: ${ACCESS_KEY}
+    secretKey: ${SECRET_KEY}
+    bucketName: ${BUCKET_NAME}
+    region:  ${REGION}
+google:
+    scholar:
+        api:
+            key: ${GOOGLE_SCHOLAR_KEY}
