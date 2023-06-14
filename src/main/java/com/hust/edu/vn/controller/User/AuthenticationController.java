@@ -1,10 +1,10 @@
-package com.hust.edu.vn.controller.User;
+package com.hust.edu.vn.controller.user;
 
 import com.hust.edu.vn.common.type.CustomResponse;
 import com.hust.edu.vn.model.ChangePasswordModel;
 import com.hust.edu.vn.model.RecoveryPasswordModel;
-import com.hust.edu.vn.model.UserModel;
-import com.hust.edu.vn.services.user.UserService;
+import com.hust.edu.vn.model.RegisterModel;
+import com.hust.edu.vn.services.user.AuthenticationService;
 import com.hust.edu.vn.services.impl.user.CustomUserDetailServices;
 import com.hust.edu.vn.utils.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,39 +14,38 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 @Slf4j
 public class AuthenticationController {
-    private final UserService userService ;
+    private final AuthenticationService authenticationService;
     private final JwtUtils jwtUtils;
 
     private final CustomUserDetailServices userDetailsService;
 
     @Autowired
     public AuthenticationController(
-            UserService userService,
+            AuthenticationService authenticationService,
             JwtUtils jwtUtils, CustomUserDetailServices userDetailsService) {
-        this.userService = userService;
+        this.authenticationService = authenticationService;
         this.jwtUtils = jwtUtils;
         this.userDetailsService = userDetailsService;
     }
 
 
     @PostMapping("sign-up")
-    public ResponseEntity<CustomResponse> signUp(@ModelAttribute UserModel userModel){
+    public ResponseEntity<CustomResponse> signUp(@RequestBody RegisterModel registerModel){
         CustomResponse resResult = new CustomResponse();
         resResult.setResponseCode(HttpStatus.BAD_REQUEST.value());
-        boolean status = userService.createAccount(userModel);
+        boolean status = authenticationService.createAccount(registerModel);
         if(status){
-            final UserDetails userDetail = userDetailsService.loadUserByUsername(userModel.getEmail());
+            final UserDetails userDetail = userDetailsService.loadUserByUsername(registerModel.getEmail());
             if (userDetail != null && userDetail.isEnabled()) {
-                return CustomResponse.generateResponse(HttpStatus.CREATED, jwtUtils.generateToken(userDetail));
+                return CustomResponse.generateResponse(HttpStatus.CREATED, "Signup successfully!");
             }
         }
-        return CustomResponse.generateResponse(status);
+        return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Email/Username existed!");
 
    }
 
@@ -62,27 +61,27 @@ public class AuthenticationController {
    }
 
    @PostMapping("login")
-    public ResponseEntity<CustomResponse> login(@ModelAttribute LoginModel user){
-        boolean status = userService.loginAccount(user.getEmail(), user.getPassword());
+    public ResponseEntity<CustomResponse> login(@RequestBody LoginModel user){
+        boolean status = authenticationService.loginAccount(user.getEmail(), user.getPassword());
         if(status){
             final UserDetails userDetail = userDetailsService.loadUserByUsername(user.getEmail());
             String token = jwtUtils.generateToken(userDetail);
             return CustomResponse.generateResponse(HttpStatus.OK, token);
         }
-        return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST);
+        return CustomResponse.generateResponse(HttpStatus.UNAUTHORIZED, "Login failed !");
    }
 
 
     @PostMapping("reset-password")
     public ResponseEntity<CustomResponse> resetPassword(@ModelAttribute("email") String email, HttpServletRequest servletRequest) {
-        boolean status = userService.createTokenResetPasswordForUser(email, applicationUrl(servletRequest));
+        boolean status = authenticationService.createTokenResetPasswordForUser(email, applicationUrl(servletRequest));
         return CustomResponse.generateResponse(status);
     }
 
 
     @PostMapping("change-password-by-token")
     public ResponseEntity<CustomResponse> changePasswordByToken(@RequestParam("token") String token, @RequestBody RecoveryPasswordModel recoveryPasswordModel){
-        boolean status = userService.recoveryPassword(token, recoveryPasswordModel);
+        boolean status = authenticationService.recoveryPassword(token, recoveryPasswordModel);
         return CustomResponse.generateResponse(status);
     }
 
@@ -97,41 +96,9 @@ public class AuthenticationController {
 
     @PostMapping("change-password-account")
     public ResponseEntity<CustomResponse> changePasswordAccount(@RequestBody ChangePasswordModel changePasswordModel){
-        boolean status = userService.changePassword(changePasswordModel);
+        boolean status = authenticationService.changePassword(changePasswordModel);
         return CustomResponse.generateResponse(status);
     }
-
-    private final String BASE_URL = "https://api.crossref.org";
-
-    record TestCheck(String query, int maxResults){
-        public String getQuery(){
-            return query;
-        }
-        public int getMaxResults(){
-            return maxResults;
-        }
-    }
-//    @GetMapping("/test")
-//    public ResponseEntity<CustomResponse> search(@ModelAttribute TestCheck test)  {
-//        String url = BASE_URL + "/works?query=" + test.getQuery() + "&rows=" + test.getMaxResults();
-//
-//        RestTemplate restTemplate = new RestTemplate();
-//        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-//
-//        if (response.getStatusCode() == HttpStatus.OK) {
-//            // Xử lý kết quả tìm kiếm ở đây;
-//            Gson gson = new Gson();
-//            Object jsonObject = gson.fromJson(response.getBody(), Object.class);
-//            String jsonInString = gson.toJson(jsonObject);
-//            System.out.println(jsonInString);
-//            return CustomResponse.generateResponse(HttpStatus.OK, "done", jsonObject);
-//        }
-//        System.out.println("Không thể tìm kiếm bằng CrossRef API.");
-//        return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST);
-//    }
-
-
-
 
 
 }

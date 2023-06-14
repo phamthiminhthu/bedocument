@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -12,6 +13,7 @@ import java.time.Instant;
 @Table(name = "event_has_user")
 public class EventHasUser {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "event_user", nullable = false)
     private Long id;
 
@@ -27,9 +29,9 @@ public class EventHasUser {
     private Byte statusUser;
 
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private Date createdAt = new Date();
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    private Date updatedAt = new Date();
 
 }

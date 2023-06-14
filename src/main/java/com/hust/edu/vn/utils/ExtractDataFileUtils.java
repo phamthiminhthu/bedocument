@@ -9,7 +9,6 @@ import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-import org.xml.sax.SAXException;
 import java.io.*;
 import java.util.*;
 

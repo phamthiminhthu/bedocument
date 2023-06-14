@@ -29,7 +29,8 @@ spring:
         multipart:
             max-file-size: ${MAX_FILE-SIZE}
             max-request-size: ${MAX_REQUEST_SIZE}
-
+    profiles:
+        active: production
 amazonProperties:
     endpointUrl: ${ENDPOINT_URL}
     accessKey: ${ACCESS_KEY}

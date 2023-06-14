@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -12,6 +13,7 @@ import java.time.Instant;
 @Table(name = "tags")
 public class Tag {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tag_id", nullable = false)
     private Long id;
 
@@ -23,9 +25,9 @@ public class Tag {
     private String tagName;
 
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private Date createdAt = new Date();
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    private Date updatedAt = new Date();
 
 }

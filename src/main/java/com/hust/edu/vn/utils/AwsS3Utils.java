@@ -93,5 +93,9 @@ public class AwsS3Utils {
         s3client.deleteObject(new DeleteObjectRequest(bucketName, fileUrl));
     }
 
+    public void deleteAvatarFromS3Bucket(String url){
+        s3client.deleteObject(new DeleteObjectRequest(bucketName, url));
+    }
+
 
 }

@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -12,6 +12,7 @@ import java.time.Instant;
 @Table(name = "type_document")
 public class TypeDocument {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "type_id", nullable = false)
     private Long id;
 
@@ -23,9 +24,9 @@ public class TypeDocument {
     private String typeName;
 
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private Date createdAt = new Date();
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    private Date updatedAt = new Date();
 
 }

@@ -1,112 +1,77 @@
 package com.hust.edu.vn.services.impl.user;
 
-import com.hust.edu.vn.entity.ResetPasswordToken;
+import com.hust.edu.vn.dto.UserDto;
 import com.hust.edu.vn.entity.User;
-import com.hust.edu.vn.model.ChangePasswordModel;
-import com.hust.edu.vn.model.RecoveryPasswordModel;
 import com.hust.edu.vn.model.UserModel;
-import com.hust.edu.vn.repository.ResetPasswordTokenRepository;
 import com.hust.edu.vn.repository.UserRepository;
-import com.hust.edu.vn.services.user.EmailService;
 import com.hust.edu.vn.services.user.UserService;
+import com.hust.edu.vn.utils.AwsS3Utils;
+import com.hust.edu.vn.utils.BaseUtils;
 import com.hust.edu.vn.utils.ModelMapperUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import java.util.UUID;
+
+import java.util.Date;
 
 @Service
 @Slf4j
 public class UserServiceImpl implements UserService {
-    private final ResetPasswordTokenRepository resetPasswordTokenRepository;
-
     private final UserRepository userRepository;
     private final ModelMapperUtils modelMapperUtils;
+    private final AwsS3Utils awsS3Utils;
 
-    private final PasswordEncoder passwordEncoder;
-
-    private final EmailService emailService;
-
-
+    private final BaseUtils baseUtils;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, ModelMapperUtils modelMapperUtils, PasswordEncoder passwordEncoder,
-                           ResetPasswordTokenRepository resetPasswordTokenRepository, EmailService emailService) {
+    public UserServiceImpl(UserRepository userRepository, ModelMapperUtils modelMapperUtils, AwsS3Utils awsS3Utils, BaseUtils baseUtils) {
         this.userRepository = userRepository;
         this.modelMapperUtils = modelMapperUtils;
-        this.passwordEncoder = passwordEncoder;
-        this.resetPasswordTokenRepository = resetPasswordTokenRepository;
-        this.emailService = emailService;
+        this.awsS3Utils = awsS3Utils;
+        this.baseUtils = baseUtils;
     }
 
-//    private Collection<? extends GrantedAuthority> getAuthorities(List<String> roles) {
-//        List<GrantedAuthority> authorities = new ArrayList<>();
-//        for(String role: roles){
-//            authorities.add(new SimpleGrantedAuthority(role));
-//        }
-//        return authorities;
-//    }
-
     @Override
-    public boolean createAccount(UserModel userModel) {
-        if(userRepository.existsByEmail(userModel.getEmail()) || userRepository.existsByUsername(userModel.getUsername())){
-            return false;
+    public UserDto getInfoProfile(String username) {
+        User user = userRepository.findByUsername(username);
+        if (user != null){
+            return modelMapperUtils.mapAllProperties(user, UserDto.class);
         }
-        String rootPath = UUID.randomUUID() + "/";
-        User user = modelMapperUtils.mapAllProperties(userModel,User.class);
-        user.setPassword(passwordEncoder.encode(userModel.getPassword()));
-        user.setRootPath(rootPath);
-        userRepository.save(user);
-        return true;
+        return null;
     }
 
     @Override
-    public boolean loginAccount(String email, String password) {
-        User user = userRepository.findByEmail(email);
-        return passwordEncoder.matches(password, user.getPassword());
-    }
-
-    @Override
-    public boolean createTokenResetPasswordForUser(String email, String applicationUrl) {
-        User user = userRepository.findByEmail(email);
-        if (user == null) return false;
-        String token = UUID.randomUUID().toString();
-        ResetPasswordToken passwordResetToken = new ResetPasswordToken(token, user);
-        resetPasswordTokenRepository.save(passwordResetToken);
-        return sendPasswordResetTokenMail(user, applicationUrl, token);
-    }
-
-    private boolean sendPasswordResetTokenMail(User user, String applicationUrl, String token) {
-        String url = applicationUrl
-                + "/api/v1/auth/change-password-by-token?token="
-                + token;
-        return emailService.sendSimpleMessage(user.getEmail(),"Kích hoạt tài khoản",url);
-    }
-
-    @Override
-    public boolean recoveryPassword(String token, RecoveryPasswordModel recoveryPasswordModel) {
-        ResetPasswordToken resetPasswordToken = resetPasswordTokenRepository.findByToken(token);
-        if(resetPasswordToken == null) return false;
-        User user = resetPasswordToken.getUser();
-        user.setPassword(passwordEncoder.encode(recoveryPasswordModel.getPassword()));
-        userRepository.save(user);
-        resetPasswordTokenRepository.deleteById(resetPasswordToken.getId());
-        return true;
-    }
-
-    @Override
-    public boolean changePassword(ChangePasswordModel changePasswordModel) {
-        User user = userRepository.findByEmail(changePasswordModel.getEmail());
-        if (user == null
-                || !passwordEncoder.matches(changePasswordModel.getOldPassword(), user.getPassword())
-                || !changePasswordModel.getNewPassword().equals(changePasswordModel.getConfirmPassword())) {
-            return false;
+    public boolean updateProfile(UserModel userModel) {
+        if(userModel.getEmail() == null || userModel.getUsername() == null) return false;
+        User user = baseUtils.getUser();
+        if(user != null){
+            User updateUser = modelMapperUtils.mapAllProperties(userModel, User.class);
+            if(userModel.getAvatar() == null) updateUser.setImage(user.getImage());
+            else {
+                if(user.getImage() == null) {
+                    String url = awsS3Utils.uploadAvatar(userModel.getAvatar(), getRootPath() + "avatar/");
+                    updateUser.setImage(url);
+                }
+                else{
+                    awsS3Utils.deleteAvatarFromS3Bucket(user.getImage());
+                    String url = awsS3Utils.uploadAvatar(userModel.getAvatar(), getRootPath() + "avatar/");
+                    updateUser.setImage(url);
+                }
+            }
+            updateUser.setPassword(user.getPassword());
+            updateUser.setId(user.getId());
+            updateUser.setRootPath(user.getRootPath());
+            updateUser.setUpdatedAt(new Date());
+            userRepository.save(updateUser);
+            return true;
         }
-        user.setPassword(passwordEncoder.encode(changePasswordModel.getNewPassword()));
-        userRepository.save(user);
-        return true;
+        return false;
+
     }
-
-
+    public String getRootPath() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email);
+        return user.getRootPath();
+    }
 }

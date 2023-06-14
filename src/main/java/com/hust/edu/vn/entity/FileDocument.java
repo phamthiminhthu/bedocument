@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -12,6 +13,7 @@ import java.time.Instant;
 @Table(name = "file_document")
 public class FileDocument {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "file_id", nullable = false)
     private Long id;
 
@@ -26,9 +28,9 @@ public class FileDocument {
     private String documentType;
 
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private Date createdAt = new Date();
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    private Date updatedAt = new Date();
 
 }

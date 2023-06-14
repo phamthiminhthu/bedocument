@@ -1,5 +1,6 @@
 package com.hust.edu.vn.config;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -7,6 +8,12 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
@@ -14,6 +21,7 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private static final String[] WHITE_LIST_URLS = {
             "/api/v1/auth/**",
+            "/api/v1/user/profile/**"
     };
 
 
@@ -26,6 +34,19 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors()
+                .configurationSource(new CorsConfigurationSource() {
+                    @Override
+                    public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+                        CorsConfiguration corsConfiguration = new CorsConfiguration();
+                        corsConfiguration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+                        corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
+                        corsConfiguration.setAllowedHeaders(Arrays.asList("Content-Type", "Authorization"));
+                        corsConfiguration.setExposedHeaders(Collections.singletonList("Authorization"));
+                        corsConfiguration.setAllowCredentials(false);
+                        corsConfiguration.setMaxAge(Duration.ofMinutes(20));
+                        return corsConfiguration;
+                    }
+                })
                 .and()
                 .csrf()
                 .disable();

@@ -4,19 +4,17 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
+import java.util.Date;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "role_group")
-public class RoleGroup {
+@Table(name = "group_has_user")
+public class GroupShareUser {
     @Id
-    @Column(name = "role_group_id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "group_user", nullable = false)
     private Long id;
-
-    @Column(name = "role_id", nullable = false)
-    private Byte roleId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
@@ -26,10 +24,13 @@ public class RoleGroup {
     @JoinColumn(name = "group_id", nullable = false)
     private GroupDoc group;
 
+    @Column(name = "status_accepted")
+    private Byte statusAccept = 0;
+
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private Date createdAt = new Date();
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    private Date updatedAt = new Date();
 
 }

@@ -1,17 +1,22 @@
 package com.hust.edu.vn.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.Instant;
+import java.util.Date;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
-@Table(name = "group_has_document")
-public class GroupHasDocument {
+@Table(name = "group_collection_has_document")
+public class GroupCollectionHasDocument {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "group_docs_id", nullable = false)
     private Long id;
 
@@ -23,10 +28,14 @@ public class GroupHasDocument {
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "collection_id")
+    private Collection collection;
+
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private Date createdAt = new Date();
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    private Date updatedAt = new Date();
 
 }

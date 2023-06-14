@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -12,6 +13,7 @@ import java.time.Instant;
 @Table(name = "event_has_document")
 public class EventHasDocument {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "event_docs", nullable = false)
     private Long id;
 
@@ -24,9 +26,9 @@ public class EventHasDocument {
     private Document document;
 
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private Date createdAt = new Date();
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    private Date updatedAt = new Date();
 
 }

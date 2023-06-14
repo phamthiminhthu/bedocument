@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -12,6 +13,7 @@ import java.time.Instant;
 @Table(name = "urls")
 public class Url {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "url_id", nullable = false)
     private Long id;
 
@@ -23,10 +25,13 @@ public class Url {
     @Column(name = "url", nullable = false)
     private String url;
 
+    @Column(name= "url_description")
+    private String description;
+
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private Date createdAt = new Date();
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    private Date updatedAt = new Date();
 
 }

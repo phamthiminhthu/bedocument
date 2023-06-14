@@ -1,6 +1,7 @@
 package com.hust.edu.vn.services.document;
 
 
+import com.hust.edu.vn.dto.DocumentDto;
 import com.hust.edu.vn.entity.Document;
 import com.hust.edu.vn.model.DocumentModel;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,7 +14,7 @@ public interface DocumentService {
 
   boolean moveToTrash(List<String> listDocumentKey);
 
-  boolean deleteDocument(List<String> listDocumentKey);
+  boolean  deleteDocument(List<String> listDocumentKey);
 
   boolean undoDocument(List<String> listDocumentKey);
 
@@ -21,7 +22,19 @@ public interface DocumentService {
 
   Document updateContentDocument(String documentKey);
 
-  List<DocumentModel> getListDocument();
+  List<DocumentDto> getListDocument();
 
-  DocumentModel getDocumentModel(String documentKey);
+  DocumentDto getDocumentModel(String documentKey);
+
+  boolean updateInformationListDocument(List<DocumentModel> listDataDocumentRequest);
+
+  List<DocumentDto> getTrashListDocument();
+
+  boolean moveDocument(List<String> listDocumentKey, List<Long> listCollectionId, String type);
+
+  List<DocumentDto> getListDocumentLoved();
+
+  boolean updateLovedDocument(String documentKey);
+
+  boolean updatePublicDocument(String documentKey);
 }
