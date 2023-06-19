@@ -49,7 +49,7 @@ public class DocumentController {
         return CustomResponse.generateResponse(HttpStatus.OK, "List all document", documents);
     }
     @GetMapping("show/details/{documentKey}")
-    public ResponseEntity<CustomResponse> getDocumentDetails(@PathVariable String documentKey){
+    public ResponseEntity<CustomResponse> getDocumentDetails(@PathVariable("documentKey") String documentKey){
         DocumentDto documentModel = documentService.getDocumentModel(documentKey);
         if(documentModel != null){
             return CustomResponse.generateResponse(HttpStatus.OK, "Document Details successfully", documentModel);
@@ -145,8 +145,8 @@ public class DocumentController {
         return CustomResponse.generateResponse(HttpStatus.NOT_FOUND, "Show Document loved failed");
     }
 
-    @PostMapping("update/loved")
-    public ResponseEntity<CustomResponse> updateLovedDocument(@ModelAttribute(value = "documentKey") String documentKey){
+    @PostMapping("loved/update")
+    public ResponseEntity<CustomResponse> updateLovedDocument(@RequestParam(value = "documentKey") String documentKey){
         boolean status = documentService.updateLovedDocument(documentKey);
         if (status){
             return CustomResponse.generateResponse(HttpStatus.OK, "Update Loved document successfully");

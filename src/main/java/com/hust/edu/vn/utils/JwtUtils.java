@@ -42,7 +42,7 @@ public class JwtUtils {
                 .setSubject(userDetails.getUsername())
                 .claim("authorities", userDetails.getAuthorities())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(24)))
+                .setExpiration(new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(100)))
                 .signWith(SignatureAlgorithm.HS256, JWT_SIGNING_KEY).compact();
     }
     public boolean isTokenValid(String token, UserDetails userDetails){

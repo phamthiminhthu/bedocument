@@ -1,10 +1,7 @@
 package com.hust.edu.vn.utils;
 
 import com.hust.edu.vn.model.TextData;
-import com.itextpdf.kernel.pdf.PdfDictionary;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfName;
-import com.itextpdf.kernel.pdf.PdfReader;
+import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -130,6 +127,8 @@ public class ExtractDataFileUtils {
             PdfReader pdfReader = new PdfReader(new FileInputStream(file));
             //Get the number of pages in pdf.
             PdfDocument pdfDoc = new PdfDocument(pdfReader);
+            PdfDocumentInfo info = pdfDoc.getDocumentInfo();
+            String titleAvailable = info.getTitle();
             //Iterate the pdf through pages.
 
             PdfDictionary infoDictionary = pdfDoc.getTrailer().getAsDictionary(PdfName.Info);
@@ -155,7 +154,8 @@ public class ExtractDataFileUtils {
 //                }
                 StringBuffer title = new StringBuffer();
                 int count = 0;
-                while(listResults.size() > 0 && title.length() < 30){
+                log.info("size" + listResults.size());
+                while(listResults.size() > 0 && title.length() < 30 && count < listResults.size()){
                     List<String> listTextFirst = listResults.get(count).getTextInfos();
                     StringBuffer fTitle = new StringBuffer();
                     boolean isBold = listResults.get(count).getIsBold();
@@ -192,7 +192,6 @@ public class ExtractDataFileUtils {
                         }else{
                             title.append(" ");
                         }
-                        log.info("Title: " + title);
                         if(title.length() > 250){
                             break;
                         }
@@ -201,7 +200,14 @@ public class ExtractDataFileUtils {
                 }
 
                 String resultSearch = title.toString().replaceAll("\\s+", " ");
-                return regexResult(resultSearch.replaceAll(".*:(?=\\s+[A-Z])", ""));
+                String secondTitleFound = regexResult(resultSearch.replaceAll(".*:(?=\\s+[A-Z])", ""));
+                if(secondTitleFound.length() > 0){
+                    return secondTitleFound;
+                }
+                if(titleAvailable != null){
+                    return titleAvailable;
+                }
+                return null;
             }
         } catch (Exception e) {
             e.printStackTrace();
