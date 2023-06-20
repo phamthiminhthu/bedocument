@@ -36,9 +36,9 @@ public class UrlController {
             return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
         }
         if(urlDtoList.size() > 0){
-            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "List url", urlDtoList);
+            return CustomResponse.generateResponse(HttpStatus.OK, "List url", urlDtoList);
         }
-        return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Empty", urlDtoList);
+        return CustomResponse.generateResponse(HttpStatus.OK, "Empty", urlDtoList);
     }
 
     @PostMapping("update/{id}")
@@ -47,7 +47,7 @@ public class UrlController {
         if(status){
             return CustomResponse.generateResponse(HttpStatus.OK, "Url updated successfully");
         }
-        return CustomResponse.generateResponse(HttpStatus.OK, "Url updated failed");
+        return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Url updated failed");
     }
 
     @PostMapping("delete/{id}")
@@ -56,6 +56,6 @@ public class UrlController {
         if(status){
             return CustomResponse.generateResponse(HttpStatus.OK, "Url delete successfully");
         }
-        return CustomResponse.generateResponse(HttpStatus.OK, "Url delete failed");
+        return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Url delete failed");
     }
 }

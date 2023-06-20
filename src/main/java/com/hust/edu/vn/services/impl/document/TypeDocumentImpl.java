@@ -93,12 +93,12 @@ public class TypeDocumentImpl implements TypeDocumentService {
     }
 
     @Override
-    public boolean deleteTypeDocument(String documentKey, Long id) {
+    public boolean deleteTypeDocument(String documentKey, String typeName) {
         User user = baseUtils.getUser();
         if(user != null) {
             Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(documentKey, user, (byte) 0);
             if(document != null){
-                TypeDocument typeDocument = typeDocumentRepository.findById(id).orElse(null);
+                TypeDocument typeDocument = typeDocumentRepository.findByDocumentAndTypeName(document, typeName);
                 if(typeDocument != null){
                     typeDocumentRepository.delete(typeDocument);
                     return true;

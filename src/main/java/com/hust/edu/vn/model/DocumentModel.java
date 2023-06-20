@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
-import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -18,7 +17,8 @@ public class DocumentModel {
     private String authors;
     private String title;
     private Integer publishingYear;
-    public String summary;
+    private String summary;
+    private String docsName;
     private Byte loved;
     private Byte docsPublic;
     private Byte docsStatus;

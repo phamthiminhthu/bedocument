@@ -61,8 +61,8 @@ public class TypeDocumentController {
     }
 
     @PostMapping("delete")
-    public ResponseEntity<CustomResponse> deleteTypeDocument(@PathVariable String documentKey, @RequestParam(value="id") Long id){
-        boolean status = typeDocumentService.deleteTypeDocument(documentKey, id);
+    public ResponseEntity<CustomResponse> deleteTypeDocument(@PathVariable String documentKey, @RequestParam(value="typeName") String typeName){
+        boolean status = typeDocumentService.deleteTypeDocument(documentKey, typeName);
         if(status){
             return CustomResponse.generateResponse(HttpStatus.OK, "Delete successfully");
         }

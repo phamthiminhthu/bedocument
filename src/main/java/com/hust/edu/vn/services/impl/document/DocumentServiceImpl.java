@@ -4,6 +4,8 @@ package com.hust.edu.vn.services.impl.document;
 import com.hust.edu.vn.dto.*;
 import com.hust.edu.vn.entity.*;
 
+import com.hust.edu.vn.entity.Collection;
+import com.hust.edu.vn.model.DocumentEditModel;
 import com.hust.edu.vn.model.DocumentModel;
 import com.hust.edu.vn.repository.*;
 import com.hust.edu.vn.services.document.*;
@@ -27,9 +29,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
@@ -130,7 +130,7 @@ public class DocumentServiceImpl implements DocumentService {
     public List<DocumentDto> getListDocument() {
         User user = baseUtils.getUser();
         if(user != null){
-            List<Document> documents = documentRepository.findByUserAndStatusDelete(user, (byte) 0);
+            List<Document> documents = documentRepository.findByUserAndStatusDeleteOrderByCreatedAtDesc(user, (byte) 0);
             List<DocumentDto> listDocumentModels = new ArrayList<>();
             if(documents != null && !documents.isEmpty()){
                 for(Document document : documents){
@@ -160,7 +160,7 @@ public class DocumentServiceImpl implements DocumentService {
     public List<DocumentDto> getTrashListDocument() {
         User user = baseUtils.getUser();
         if(user != null){
-            List<Document> listDocumentTrash = documentRepository.findAllByUserIdAndStatusDelete(user.getId(), (byte) 1);
+            List<Document> listDocumentTrash = documentRepository.findByUserAndStatusDeleteOrderByCreatedAtDesc(user, (byte) 1);
             if(listDocumentTrash != null && !listDocumentTrash.isEmpty()){
                 List<DocumentDto> documentsModelList = new ArrayList<>();
                 for(Document document : listDocumentTrash){
@@ -179,7 +179,7 @@ public class DocumentServiceImpl implements DocumentService {
     public List<DocumentDto> getListDocumentLoved() {
         User user = baseUtils.getUser();
         if(user != null){
-            List<Document> documentList = documentRepository.findAllByUserAndLoved(user, (byte) 1);
+            List<Document> documentList = documentRepository.findAllByUserAndLovedOrderByCreatedAtDesc(user, (byte) 1);
             List<DocumentDto> documentDtoList = new ArrayList<>();
             if(documentList != null &&  !documentList.isEmpty()){
                 for (Document document : documentList){
@@ -381,6 +381,96 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    public boolean editDocumentByKey(String documentKey, DocumentEditModel documentEditModel) {
+        User user = baseUtils.getUser();
+        if(user!= null) {
+            Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(documentKey, user, (byte) 0);
+            if (document != null) {
+                Document newDocument = modelMapperUtils.mapAllProperties(documentEditModel.getDocumentModel(), Document.class);
+                newDocument.setId(document.getId());
+                newDocument.setDocumentKey(documentKey);
+                newDocument.setUser(user);
+                newDocument.setQuantityLike(document.getQuantityLike());
+                newDocument.setCreatedAt(document.getCreatedAt());
+                newDocument.setUpdatedAt(new Date());
+
+                // tags
+                List<Tag> tags = tagRepository.findAllByDocument(document);
+                if(documentEditModel.getTags() != null && !documentEditModel.getTags().isEmpty()){
+                    if(tags != null && !tags.isEmpty()){
+                        List<String> oldListTags = new ArrayList<>();
+                        for(Tag tag : tags){
+                            oldListTags.add(tag.getTagName());
+                        }
+                        List<String> oldListTagsDeleted = removeDuplicatesMultiList(documentEditModel.getTags(), oldListTags);
+                        if(oldListTagsDeleted != null && !oldListTagsDeleted.isEmpty()) {
+                            for(String oldTag : oldListTagsDeleted){
+                                tagService.deleteTag(documentKey, oldTag);
+                            }
+                        }
+                        List<String> newListTags  = removeDuplicatesMultiList(oldListTags, documentEditModel.getTags());
+                        if(newListTags != null && !newListTags.isEmpty()){
+                            for(String newTag : newListTags){
+                                tagService.createTag(documentKey, newTag);
+                            }
+                        }
+
+                    }else{
+                        for(String newTag : documentEditModel.getTags()){
+                            tagService.createTag(documentKey, newTag);
+                        }
+                    }
+                }else{
+                    if(tags != null && !tags.isEmpty()){
+                        tagRepository.deleteAll(tags);
+                    }
+                }
+                // type docs
+                List<TypeDocument> typeDocuments = typeDocumentRepository.findAllByDocument(document);
+                if(documentEditModel.getTypesDoc() != null && !documentEditModel.getTypesDoc().isEmpty()){
+                    if(typeDocuments != null && !typeDocuments.isEmpty()){
+                        List<String> oldTypesDocs = new ArrayList<>();
+                        for (TypeDocument typeDocument : typeDocuments){
+                            oldTypesDocs.add(typeDocument.getTypeName());
+                        }
+                        List<String> newTypesDocs = removeDuplicatesMultiList(oldTypesDocs, documentEditModel.getTypesDoc());
+                        List<String> oldTypesDeleted = removeDuplicatesMultiList(documentEditModel.getTypesDoc(), oldTypesDocs);
+                        if(oldTypesDeleted!= null &&!oldTypesDeleted.isEmpty()){
+                            for(String oldTypeDelete : oldTypesDeleted){
+                                typeDocumentService.deleteTypeDocument(documentKey, oldTypeDelete);
+                            }
+                        }
+                        if(newTypesDocs != null && !newTypesDocs.isEmpty()){
+                            for(String typeName : newTypesDocs){
+                                TypeDocument typeDocument = new TypeDocument();
+                                typeDocument.setTypeName(typeName);
+                                typeDocument.setDocument(document);
+                                typeDocumentRepository.save(typeDocument);
+                            }
+                        }
+
+                    }else{
+                        for(String typeName : documentEditModel.getTypesDoc()){
+                            TypeDocument typeDocument = new TypeDocument();
+                            typeDocument.setTypeName(typeName);
+                            typeDocument.setDocument(document);
+                            typeDocumentRepository.save(typeDocument);
+                        }
+                    }
+                }else{
+                    if(typeDocuments != null && !typeDocuments.isEmpty()){
+                        typeDocumentRepository.deleteAll(typeDocuments);
+                    }
+                }
+                documentRepository.save(newDocument);
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
+
+    @Override
     public boolean updateInformationDocument(String documentKey, DocumentModel documentModel) {
         User user = baseUtils.getUser();
         if(user != null){
@@ -389,6 +479,7 @@ public class DocumentServiceImpl implements DocumentService {
                 Document newDocument = modelMapperUtils.mapAllProperties(documentModel, Document.class);
                 newDocument.setId(document.getId());
                 newDocument.setQuantityLike(document.getQuantityLike());
+                newDocument.setUpdatedAt(new Date());
                 newDocument.setCreatedAt(document.getCreatedAt());
                 documentRepository.save(newDocument);
                 return true;
@@ -568,6 +659,22 @@ public class DocumentServiceImpl implements DocumentService {
         return documentModel;
     }
 
+    private List<String> removeDuplicatesMultiList(List<String> fList, List<String> sList) {
+       if(fList != null && !fList.isEmpty()){
+           Set<String> fListSet = new HashSet<>(fList);
+           if( sList != null && !sList.isEmpty()){
+               List<String> result = new ArrayList<>();
+               for (String str :  sList){
+                   if(!fListSet.contains(str)){
+                       result.add(str);
+                   }
+               }
+               return result;
+           }
+           return fList;
+       }
+       return null;
+    }
 
 
 }

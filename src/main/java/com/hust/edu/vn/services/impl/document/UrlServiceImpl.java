@@ -41,6 +41,7 @@ public class UrlServiceImpl implements UrlService {
             if(document != null){
                 if(!urlRepository.existsByDocumentAndUrl(document, urlModel.getUrl())){
                     Url url = modelMapperUtils.mapAllProperties(urlModel, Url.class);
+                    url.setDocument(document);
                     urlRepository.save(url);
                     return true;
                 }

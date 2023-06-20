@@ -3,7 +3,9 @@ package com.hust.edu.vn.controller.document;
 import com.hust.edu.vn.common.type.CustomResponse;
 import com.hust.edu.vn.dto.DocumentDto;
 import com.hust.edu.vn.entity.Document;
+import com.hust.edu.vn.model.DocumentEditModel;
 import com.hust.edu.vn.model.DocumentModel;
+import com.hust.edu.vn.model.UrlModel;
 import com.hust.edu.vn.services.document.DocumentService;
 import com.hust.edu.vn.utils.ModelMapperUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +64,15 @@ public class DocumentController {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_PDF);
         return ResponseEntity.ok().headers(httpHeaders).body(data);
+    }
+
+    @PostMapping("edit")
+    public ResponseEntity<CustomResponse> editDocumentByKey(@RequestParam(value = "documentKey") String documentKey, @RequestBody DocumentEditModel documentEditModel){
+        boolean status = documentService.editDocumentByKey(documentKey, documentEditModel);
+        if(status){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Update successfully");
+        }
+        return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Update failed");
     }
 
     @PostMapping("update/{documentKey}")

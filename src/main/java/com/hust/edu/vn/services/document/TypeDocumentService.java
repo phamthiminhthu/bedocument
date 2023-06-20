@@ -11,5 +11,5 @@ public interface TypeDocumentService {
 
     boolean updateTypeDocument(String documentKey, Long id, String typeName);
 
-    boolean deleteTypeDocument(String documentKey, Long id);
+    boolean deleteTypeDocument(String documentKey, String typeName);
 }

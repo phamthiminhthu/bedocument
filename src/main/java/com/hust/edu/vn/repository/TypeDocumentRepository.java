@@ -14,4 +14,6 @@ public interface TypeDocumentRepository extends JpaRepository<TypeDocument, Long
     boolean existsByDocument(Document document);
 
     List<TypeDocument> findAllByDocument(Document document);
+
+    TypeDocument findByDocumentAndTypeName(Document document, String typeName);
 }
