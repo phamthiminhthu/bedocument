@@ -291,13 +291,7 @@ public class DocumentServiceImpl implements DocumentService {
            if(documentDtoList != null && documentDtoList.size() > 0){
                deleteDocumentDtoBetweenMultipleList(suggestionsDocumentDtoList, documentDtoList);
            }
-           if(documentDtoCurrentUser != null && documentDtoCurrentUser.size() > 0){
-               deleteDocumentDtoBetweenMultipleList(suggestionsDocumentDtoList, documentDtoCurrentUser);
-           }
-           if(suggestionsDocumentDtoList.size() > 0){
-               suggestionsDocumentDtoList.removeIf(obj -> obj.getDocsPublic() == 0);
-           }
-           return suggestionsDocumentDtoList;
+           return getDocumentDtoListWithListDocumentCurrentDto(user, documentDtoCurrentUser, suggestionsDocumentDtoList);
        }
        return null;
     }
@@ -323,16 +317,26 @@ public class DocumentServiceImpl implements DocumentService {
             if(documentDtoList.size() > 0){
                 deleteDocumentDtoBetweenMultipleList(suggestionsDocumentDtoList, documentDtoList);
             }
-            if(documentDtoCurrentUser != null && documentDtoCurrentUser.size() > 0){
-                deleteDocumentDtoBetweenMultipleList(suggestionsDocumentDtoList, documentDtoCurrentUser);
-            }
-            if(suggestionsDocumentDtoList.size() > 0){
-                suggestionsDocumentDtoList.removeIf(obj -> obj.getDocsPublic() == 0);
-            }
-            return suggestionsDocumentDtoList;
+            return getDocumentDtoListWithListDocumentCurrentDto(user, documentDtoCurrentUser, suggestionsDocumentDtoList);
         }
         return null;
     }
+
+    private List<DocumentDto> getDocumentDtoListWithListDocumentCurrentDto(User user, List<DocumentDto> documentDtoCurrentUser, List<DocumentDto> suggestionsDocumentDtoList) {
+        if(documentDtoCurrentUser != null && documentDtoCurrentUser.size() > 0){
+            deleteDocumentDtoBetweenMultipleList(suggestionsDocumentDtoList, documentDtoCurrentUser);
+        }
+        if(suggestionsDocumentDtoList.size() > 0){
+            suggestionsDocumentDtoList.removeIf(obj -> obj.getDocsPublic() == 0);
+            for (DocumentDto doc : suggestionsDocumentDtoList){
+                if(likeDocumentRepository.existsByUserAndDocumentId(user, doc.getId())){
+                    doc.setLiked(((byte) 1));
+                }
+            }
+        }
+        return suggestionsDocumentDtoList;
+    }
+
 
     @Override
     public List<UserDto> getListSuggestUsers() {
