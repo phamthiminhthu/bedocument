@@ -16,4 +16,6 @@ public interface TypeDocumentRepository extends JpaRepository<TypeDocument, Long
     List<TypeDocument> findAllByDocument(Document document);
 
     TypeDocument findByDocumentAndTypeName(Document document, String typeName);
+
+    List<TypeDocument> findByTypeNameContainingIgnoreCase(String typeName);
 }

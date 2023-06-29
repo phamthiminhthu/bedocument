@@ -48,7 +48,7 @@ public class CustomUserDetailServices implements UserDetailsService {
                 true,
                 true,
                 true,
-                getAuthorities(List.of("admin"))
+                getAuthorities(List.of("user"))
         );
     }
 

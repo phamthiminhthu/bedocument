@@ -2,10 +2,10 @@ package com.hust.edu.vn.controller.document;
 
 import com.hust.edu.vn.common.type.CustomResponse;
 import com.hust.edu.vn.dto.DocumentDto;
+import com.hust.edu.vn.dto.UserDto;
 import com.hust.edu.vn.entity.Document;
 import com.hust.edu.vn.model.DocumentEditModel;
 import com.hust.edu.vn.model.DocumentModel;
-import com.hust.edu.vn.model.UrlModel;
 import com.hust.edu.vn.services.document.DocumentService;
 import com.hust.edu.vn.utils.ModelMapperUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -107,11 +107,102 @@ public class DocumentController {
         }
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Move To Trash failed");
     }
-    @GetMapping("show/trash")
+
+    @GetMapping("trash/show/all")
     public ResponseEntity<CustomResponse> showDocumentOnTrash(){
         List<DocumentDto> documents = documentService.getTrashListDocument();
-        return CustomResponse.generateResponse(HttpStatus.OK, "Show list on trash", documents);
+        if(documents == null){
+            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
+        }
+        if(documents.size() > 0){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Show list on trash", documents);
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "No empty", documents);
     }
+
+   @GetMapping("show/public")
+   public ResponseEntity<CustomResponse> getListDocumentPublic(){
+        List<DocumentDto> documents = documentService.getListDocumentPublic();
+        if(documents == null){
+            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
+        }
+        if (documents.size() == 0){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Don't have documents. Please add more documents", documents);
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "List all document", documents);
+   }
+
+   @GetMapping("show/public/by-username")
+   public ResponseEntity<CustomResponse> getListDocumentPublicUserName(@RequestParam("username") String username){
+       List<DocumentDto> documents = documentService.getListDocumentPublicByUsername(username);
+       if(documents == null){
+           return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "No existed");
+       }
+       if (documents.size() == 0){
+           return CustomResponse.generateResponse(HttpStatus.OK, "Don't have documents. Please add more documents", documents);
+       }
+       return CustomResponse.generateResponse(HttpStatus.OK, "List all document", documents);
+   }
+
+   @GetMapping("following/show/all")
+   public ResponseEntity<CustomResponse>  getListDocumentPublicFollowing(){
+       List<DocumentDto> documents = documentService.getListDocumentPublicFollowing();
+       if(documents == null){
+           return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
+       }
+       if (documents.size() == 0){
+           return CustomResponse.generateResponse(HttpStatus.OK, "Don't have documents. Please add more documents", documents);
+       }
+       return CustomResponse.generateResponse(HttpStatus.OK, "List all document", documents);
+   }
+
+   @GetMapping("suggest/by-tags/show/all")
+   public ResponseEntity<CustomResponse> getListDocumentPublicSuggestByTag(){
+        List<DocumentDto> documents = documentService.getListDocumentPublicSuggestByTag();
+        if(documents == null){
+            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
+        }
+        if (documents.size() == 0){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Don't have documents. Please add more documents", documents);
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "List all document", documents);
+   }
+
+   @GetMapping("suggest/by-typeDocs/show/all")
+   public ResponseEntity<CustomResponse> getListDocumentPublicSuggestByType(){
+       List<DocumentDto> documents = documentService.getListDocumentPublicSuggestByTypeDocs();
+       if(documents == null){
+           return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
+       }
+       if (documents.size() == 0){
+           return CustomResponse.generateResponse(HttpStatus.OK, "Don't have documents. Please add more documents", documents);
+       }
+       return CustomResponse.generateResponse(HttpStatus.OK, "List all document", documents);
+   }
+
+   @GetMapping("suggest/show/all")
+   public ResponseEntity<CustomResponse> getListDocumentPublicSuggest(){
+        List<DocumentDto> documents = documentService.getListDocumentPublicSuggest();
+        if(documents == null){
+            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
+        }
+        if (documents.size() == 0){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Don't have documents. Please add more documents", documents);
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "List all document", documents);
+   }
+
+   @GetMapping("suggest/user/show/all")
+   public ResponseEntity<CustomResponse> getListSuggestUsers(){
+        List<UserDto> usersSuggest = documentService.getListSuggestUsers();
+        if(usersSuggest == null){
+            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
+        }
+        if (usersSuggest.size() == 0){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Don't have documents. Please add more documents", usersSuggest);
+        }
+       return CustomResponse.generateResponse(HttpStatus.OK, "List user suggest", usersSuggest);
+   }
 
     @PostMapping("undo")
     public ResponseEntity<CustomResponse> undoDocument(@RequestBody List<String> listDocumentKey){
@@ -154,6 +245,30 @@ public class DocumentController {
             return CustomResponse.generateResponse(HttpStatus.OK, "Show Document loved successfully", documentDtoList);
         }
         return CustomResponse.generateResponse(HttpStatus.NOT_FOUND, "Show Document loved failed");
+    }
+
+    @GetMapping("shared/me")
+    public ResponseEntity<CustomResponse> getListDocumentShared(){
+        List<DocumentDto> documentDtoList = documentService.getListDocumentShared();
+        if(documentDtoList == null){
+            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
+        }
+        if(documentDtoList.size() > 0){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Show Document shared successfully", documentDtoList);
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "Empty", documentDtoList);
+    }
+
+    @GetMapping("completed/show/all")
+    public ResponseEntity<CustomResponse> getListDocumentCompleted(){
+        List<DocumentDto> documentDtoList = documentService.getListDocumentCompleted();
+        if(documentDtoList == null){
+            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
+        }
+        if(documentDtoList.size() > 0){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Show Document shared successfully", documentDtoList);
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "Empty", documentDtoList);
     }
 
     @PostMapping("loved/update")

@@ -1,6 +1,7 @@
 package com.hust.edu.vn.controller.document;
 
 import com.hust.edu.vn.common.type.CustomResponse;
+import com.hust.edu.vn.dto.UserDto;
 import com.hust.edu.vn.services.document.DocumentShareUserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -23,36 +24,37 @@ public class DocumentShareUserController {
         this.documentShareUserService = documentShareUserService;
     }
 
-    record DocumentShare( String documentKey, List<String> emailUsers){
-        public String getDocumentKey(){
-            return documentKey;
-        }
-        public List<String> getEmailUsers(){
-            return emailUsers;
-        }
-
-    }
-
-
     // doing check ~~ share document for list username
     @PostMapping("/")
-    public ResponseEntity<CustomResponse> shareDocument(@RequestBody DocumentShare documentShare, HttpServletRequest httpServletRequest) {
-        boolean status = documentShareUserService.shareDocument(documentShare.getDocumentKey(), documentShare.getEmailUsers(), applicationUrl(httpServletRequest));
+    public ResponseEntity<CustomResponse> shareDocument(@RequestParam(value = "documentKey") String documentKey, @RequestBody List<String> emailUsers, HttpServletRequest httpServletRequest) {
+        boolean status = documentShareUserService.shareDocument(documentKey, emailUsers, applicationUrl(httpServletRequest));
         if(status){
             return CustomResponse.generateResponse(HttpStatus.OK, "Share document successfully");
         }
         return CustomResponse.generateResponse(HttpStatus.OK, "Share document failed");
     }
 
+    @GetMapping("/users/all")
+    public ResponseEntity<CustomResponse> getUsersSharedDocuments(@RequestParam(value = "documentKey") String documentKey) {
+        List<UserDto> userDtoList = documentShareUserService.getUsersSharedDocuments(documentKey);
+        if (userDtoList == null) {
+            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Not access document");
+        }
+        if (userDtoList.size() > 0) {
+            return CustomResponse.generateResponse(HttpStatus.OK, "List User", userDtoList);
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "No users");
+    }
+
     // doing check ~~ delete share of users
-    @PostMapping("delete")
-    public ResponseEntity<CustomResponse> deleteShareDocument(@RequestBody DocumentShare documentShare) {
-        boolean status = documentShareUserService.deleteShareDocument(documentShare.getDocumentKey(), documentShare.getEmailUsers());
+    @PostMapping("delete/user")
+    public ResponseEntity<CustomResponse> deleteShareDocument(@RequestParam(value = "documentKey") String documentKey,
+                                                              @RequestParam(value = "id") Long id) {
+        boolean status = documentShareUserService.deleteShareDocument(documentKey,  id);
         if(status){
             return CustomResponse.generateResponse(HttpStatus.OK, "Delete share document successfully");
         }
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Delete share document Failed");
-
     }
 
     // todo: doing check ~~ kieu data tra ve

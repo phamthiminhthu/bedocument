@@ -52,7 +52,7 @@ public class FollowServiceImpl implements FollowService {
 
     @Override
     public boolean unfollowUser(String username) {
-        User user = userRepository.findByUsername(username);
+        User user = baseUtils.getUser();
         if (user != null){
             User followingUser = userRepository.findByUsername(username);
             if(followingUser != null){
@@ -99,5 +99,22 @@ public class FollowServiceImpl implements FollowService {
             return userDtoList;
         }
         return null;
+    }
+
+    @Override
+    public int getListStatusFollowing(String username) {
+        User currentUser = baseUtils.getUser();
+        User user = userRepository.findByUsername(username);
+        if(user != null){
+            if(currentUser != null) {
+                if (currentUser.getId().equals(user.getId())) {
+                    return 2;
+                } else if(followRepository.existsByFollowingIdAndFollower(user.getId(), currentUser)) {
+                        return 1;
+                }
+                return 0;
+            }
+        }
+        return 0;
     }
 }

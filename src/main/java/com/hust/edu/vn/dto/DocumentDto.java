@@ -30,4 +30,5 @@ public class DocumentDto implements Serializable {
     private List<UrlDto> urls;
     private List<TypeDocumentDto> typeDocumentsList;
     private List<TagDto> tagDtoList;
+    private Byte liked = 0;
 }

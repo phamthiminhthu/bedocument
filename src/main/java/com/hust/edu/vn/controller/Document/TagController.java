@@ -1,6 +1,7 @@
 package com.hust.edu.vn.controller.document;
 
 import com.hust.edu.vn.common.type.CustomResponse;
+import com.hust.edu.vn.dto.DocumentDto;
 import com.hust.edu.vn.dto.TagDto;
 import com.hust.edu.vn.services.document.TagService;
 import org.springframework.http.HttpStatus;
@@ -65,6 +66,18 @@ public class TagController {
             return CustomResponse.generateResponse(HttpStatus.OK, "Show all successfully", listTag);
         }
         return CustomResponse.generateResponse(HttpStatus.NOT_FOUND, "No Tag", listTag);
+    }
+
+    @GetMapping("find/documents")
+    public ResponseEntity<CustomResponse> showTag(@RequestParam("tagName") String tagName){
+        List<DocumentDto> documentDtoList = tagService.findDocumentsByTag(tagName);
+        if(documentDtoList == null){
+            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
+        }
+        if(documentDtoList.size() > 0){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Show tag successfully", documentDtoList);
+        }
+        return CustomResponse.generateResponse(HttpStatus.NOT_FOUND, "Tag Empty", documentDtoList);
     }
 
 }

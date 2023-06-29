@@ -22,6 +22,16 @@ public class UserController {
         this.userService = userService;
     }
 
+    @GetMapping("/username/show")
+    public ResponseEntity<CustomResponse> getUsernameByEmail(@RequestParam("email") String email){
+        String username = userService.getUsernameByToken(email);
+        if(username == null){
+            return CustomResponse.generateResponse(HttpStatus.NOT_FOUND, "Not found user!");
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "User exists", username);
+    }
+
+
     @GetMapping("profile/{username}")
     public ResponseEntity<CustomResponse> getInfoProfile(@PathVariable String username){
         UserDto userDto = userService.getInfoProfile(username);
@@ -36,5 +46,14 @@ public class UserController {
         boolean status = userService.updateProfile(userModel);
         if(status) return CustomResponse.generateResponse(HttpStatus.OK, "Update user successfully");
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Update user failed");
+    }
+
+    @GetMapping("find/username")
+    public ResponseEntity<CustomResponse> findByUsername(@RequestParam(value="username") String username){
+        UserDto userDto = userService.findByUsername(username);
+        if(userDto == null){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Not Found");
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "Found", userDto);
     }
 }

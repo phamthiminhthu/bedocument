@@ -19,7 +19,7 @@ public class LikeDocumentController {
         this.likeDocumentService = likeDocumentService;
     }
 
-    @PostMapping("/like")
+    @PostMapping("like")
     public ResponseEntity<CustomResponse> likeDocument(@RequestParam(value = "document") String documentKey){
         boolean status = likeDocumentService.likeDocument(documentKey);
         if(status){
@@ -28,7 +28,7 @@ public class LikeDocumentController {
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Like document failed");
     }
 
-    @GetMapping("/like/show/all")
+    @GetMapping("like/show/all")
     public ResponseEntity<CustomResponse> showAllUserLikeDocument(@RequestParam(value = "document") String documentKey){
         List<UserDto> userDtoList = likeDocumentService.showAllUserLikeDocument(documentKey);
         if(userDtoList != null){
@@ -41,7 +41,7 @@ public class LikeDocumentController {
 
     }
 
-    @PostMapping("/unlike")
+    @PostMapping("unlike")
     public ResponseEntity<CustomResponse> unlikeDocument(@RequestParam(value = "document") String documentKey){
         boolean status = likeDocumentService.unlikeDocument(documentKey);
         if(status){

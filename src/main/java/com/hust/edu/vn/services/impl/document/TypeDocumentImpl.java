@@ -1,5 +1,6 @@
 package com.hust.edu.vn.services.impl.document;
 
+import com.hust.edu.vn.dto.DocumentDto;
 import com.hust.edu.vn.dto.TypeDocumentDto;
 import com.hust.edu.vn.entity.Document;
 import com.hust.edu.vn.entity.TypeDocument;
@@ -11,9 +12,7 @@ import com.hust.edu.vn.utils.BaseUtils;
 import com.hust.edu.vn.utils.ModelMapperUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class TypeDocumentImpl implements TypeDocumentService {
@@ -108,5 +107,24 @@ public class TypeDocumentImpl implements TypeDocumentService {
             return false;
         }
         return false;
+    }
+
+    @Override
+    public List<DocumentDto> findDocumentByTypeDocument(String typeName) {
+        User user = baseUtils.getUser();
+        if(user != null){
+            List<TypeDocument> listTypeDocument = typeDocumentRepository.findByTypeNameContainingIgnoreCase(typeName);
+            List<DocumentDto> documentDtoList = new ArrayList<>();
+            List<DocumentDto> result = new ArrayList<>();
+            if(listTypeDocument != null && !listTypeDocument.isEmpty()){
+                for (TypeDocument typeDocument : listTypeDocument){
+                    documentDtoList.add(modelMapperUtils.mapAllProperties(typeDocument.getDocument(), DocumentDto.class));
+                }
+                Set<DocumentDto> documentsDtoUnique = new HashSet<>(documentDtoList);
+               result = new ArrayList<>(documentsDtoUnique);
+            }
+            return result;
+        }
+        return null;
     }
 }

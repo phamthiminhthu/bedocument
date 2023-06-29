@@ -12,4 +12,6 @@ public interface FollowService {
     List<UserDto> getListFollower(String username);
 
     List<UserDto> getListUserFollowing(String username);
+
+    int getListStatusFollowing(String username);
 }

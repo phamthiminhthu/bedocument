@@ -1,7 +1,7 @@
 package com.hust.edu.vn.services.document;
 
 
-import com.amazonaws.services.applicationinsights.model.Tag;
+import com.hust.edu.vn.dto.DocumentDto;
 import com.hust.edu.vn.dto.TagDto;
 
 import java.util.List;
@@ -14,4 +14,6 @@ public interface TagService {
     boolean deleteTag(String documentKey, String tagName);
 
     List<TagDto> showAllTag(String documentKey);
+
+    List<DocumentDto> findDocumentsByTag(String tagName);
 }

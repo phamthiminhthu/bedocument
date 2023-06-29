@@ -37,8 +37,8 @@ public class FollowController {
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "UnFollow failed");
     }
 
-    @GetMapping("profile/{username}/follower")
-    public ResponseEntity<CustomResponse> getFollower(@PathVariable String username){
+    @GetMapping("follower")
+    public ResponseEntity<CustomResponse> getFollower(@RequestParam(value="username") String username){
         List<UserDto> userDtoList = followService.getListFollower(username);
         if(userDtoList == null) {
             return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Please login account");
@@ -49,8 +49,8 @@ public class FollowController {
         return CustomResponse.generateResponse(HttpStatus.OK, "Don't have no one", userDtoList);
     }
 
-    @GetMapping("profile/{username}/following")
-    public ResponseEntity<CustomResponse> getUserFollowing(@PathVariable String username){
+    @GetMapping("following")
+    public ResponseEntity<CustomResponse> getUserFollowing(@RequestParam(value="username") String username){
         List<UserDto> userDtoList = followService.getListUserFollowing(username);
         if(userDtoList == null) {
             return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Please login account");
@@ -59,6 +59,18 @@ public class FollowController {
             return CustomResponse.generateResponse(HttpStatus.OK, "List following", userDtoList);
         }
         return CustomResponse.generateResponse(HttpStatus.OK, "Don't have no one", userDtoList);
+    }
+
+    @GetMapping("status/following")
+    public ResponseEntity<CustomResponse> getStatusFollowing(@RequestParam(value="username") String username){
+        int status = followService.getListStatusFollowing(username);
+        if(status == 0) {
+            return CustomResponse.generateResponse(HttpStatus.OK, "Follow");
+        }
+        if(status == 1){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Unfollow");
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "Edit Profile");
     }
 
 }

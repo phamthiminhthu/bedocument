@@ -22,4 +22,4 @@ services:
     env_file:
       - .env
     environment:
-      spring.datasource.url: "jdbc:mysql://db:3306/document?user=root&password=password&allowPublicKeyRetrieval=true&useSSL=false&createDatabaseIfNotExist=true"
+      spring.datasource.url: "jdbc:mysql://db:3306/document?user=root&password=password&allowPublicKeyRetrieval=true&useSSL=false&createDatabaseIfNotExist=true&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION'&jdbcCompliantTruncation=false"

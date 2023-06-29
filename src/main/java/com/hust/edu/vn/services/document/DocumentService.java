@@ -2,6 +2,7 @@ package com.hust.edu.vn.services.document;
 
 
 import com.hust.edu.vn.dto.DocumentDto;
+import com.hust.edu.vn.dto.UserDto;
 import com.hust.edu.vn.entity.Document;
 import com.hust.edu.vn.model.DocumentEditModel;
 import com.hust.edu.vn.model.DocumentModel;
@@ -25,6 +26,22 @@ public interface DocumentService {
   List<DocumentDto> getListDocumentLoved();
   boolean updateLovedDocument(String documentKey);
   boolean updatePublicDocument(String documentKey);
-
   boolean editDocumentByKey(String documentKey, DocumentEditModel documentEditModel);
+  List<DocumentDto> getListDocumentPublic();
+
+  List<DocumentDto> getListDocumentShared();
+
+  List<DocumentDto> getListDocumentCompleted();
+
+  List<DocumentDto> getListDocumentPublicSuggestByTag();
+
+  List<DocumentDto> getListDocumentPublicFollowing();
+
+  List<DocumentDto> getListDocumentPublicSuggestByTypeDocs();
+
+  List<UserDto> getListSuggestUsers();
+
+  List<DocumentDto> getListDocumentPublicSuggest();
+
+  List<DocumentDto> getListDocumentPublicByUsername(String username);
 }

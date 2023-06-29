@@ -12,10 +12,15 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     Document findByDocumentKeyAndUserAndStatusDelete(String documentKey, User user, Byte statusDelete);
 
-
     Document findByDocumentKeyAndStatusDelete(String documentKey, byte b);
 
     List<Document> findAllByUserAndLovedOrderByCreatedAtDesc(User user, byte b);
 
     List<Document> findByUserAndStatusDeleteOrderByCreatedAtDesc(User user, byte b);
+
+    List<Document> findAllByUserAndDocsPublicOrderByCreatedAtDesc(User user, byte b);
+
+    List<Document> findAllByUserAndDocsStatusOrderByCreatedAtDesc(User user, byte b);
+
+    List<Document> findAllByUserAndDocsPublicOrderByUpdatedAtDesc(User following, byte b);
 }

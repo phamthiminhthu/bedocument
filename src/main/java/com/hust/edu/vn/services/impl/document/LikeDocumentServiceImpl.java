@@ -79,7 +79,9 @@ public class LikeDocumentServiceImpl implements LikeDocumentService {
             if(user != null){
                 if(likeDocumentRepository.existsByUserAndDocument(user, document)){
                     LikeDocument likeDocument = likeDocumentRepository.findByUserAndDocument(user, document);
+                    document.setQuantityLike(document.getQuantityLike() - 1L);
                     likeDocumentRepository.delete(likeDocument);
+                    documentRepository.save(document);
                     return true;
                 }
                 return false;

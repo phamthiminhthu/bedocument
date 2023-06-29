@@ -20,4 +20,7 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
     List<Tag> findAllByDocument(Document document);
 
     Tag findByTagNameAndDocument(String tagName, Document document);
+
+    List<Tag> findByTagNameContainingIgnoreCase(String tagName);
+
 }

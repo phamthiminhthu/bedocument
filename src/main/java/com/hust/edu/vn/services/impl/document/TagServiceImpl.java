@@ -1,5 +1,6 @@
 package com.hust.edu.vn.services.impl.document;
 
+import com.hust.edu.vn.dto.DocumentDto;
 import com.hust.edu.vn.dto.TagDto;
 import com.hust.edu.vn.entity.Document;
 import com.hust.edu.vn.entity.Tag;
@@ -9,13 +10,13 @@ import com.hust.edu.vn.repository.TagRepository;
 import com.hust.edu.vn.services.document.TagService;
 import com.hust.edu.vn.utils.BaseUtils;
 import com.hust.edu.vn.utils.ModelMapperUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
+@Slf4j
 public class TagServiceImpl implements TagService {
 
     private final BaseUtils baseUtils;
@@ -101,6 +102,22 @@ public class TagServiceImpl implements TagService {
             return null;
         }
         return null;
+    }
+
+    @Override
+    public List<DocumentDto> findDocumentsByTag(String tagName) {
+        List<Tag> tags = tagRepository.findByTagNameContainingIgnoreCase(tagName);
+        List<DocumentDto> documentDtoList = new ArrayList<>();
+        List<DocumentDto> result = new ArrayList<>();
+        if(tags != null && !tags.isEmpty()){
+            for(Tag tag : tags){
+                documentDtoList.add(modelMapperUtils.mapAllProperties(tag.getDocument(), DocumentDto.class));
+            }
+            Set<DocumentDto> documentDtoListUnique = new HashSet<>(documentDtoList);
+            log.info(documentDtoListUnique.toString());
+            result = new ArrayList<>(documentDtoListUnique);
+        }
+        return result;
     }
 
 }

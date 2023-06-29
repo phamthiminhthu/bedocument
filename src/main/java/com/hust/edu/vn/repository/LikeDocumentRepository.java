@@ -15,4 +15,6 @@ public interface LikeDocumentRepository extends JpaRepository<LikeDocument, Long
     List<LikeDocument> findAllByDocument(Document document);
 
     LikeDocument findByUserAndDocument(User user, Document document);
+
+    boolean existsByUserAndDocumentId(User user, Long id);
 }
