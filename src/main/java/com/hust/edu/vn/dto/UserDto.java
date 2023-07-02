@@ -25,5 +25,6 @@ public class UserDto implements Serializable {
     private String introduce;
     private Date createdAt;
     private Date updatedAt;
+    private Byte follower = 0;
 
 }

@@ -56,4 +56,14 @@ public class UserController {
         }
         return CustomResponse.generateResponse(HttpStatus.OK, "Found", userDto);
     }
+
+    @GetMapping("information/by-token")
+    public ResponseEntity<CustomResponse> getInfo(){
+        UserDto userDto = userService.getInformationByToken();
+        if(userDto == null){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Not Found");
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "Found", userDto);
+    }
+
 }

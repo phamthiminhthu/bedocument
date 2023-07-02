@@ -88,6 +88,15 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
+    @Override
+    public UserDto getInformationByToken() {
+        User user = baseUtils.getUser();
+        if(user!= null){
+            return modelMapperUtils.mapAllProperties(user, UserDto.class);
+        }
+        return null;
+    }
+
     public String getRootPath() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByEmail(email);

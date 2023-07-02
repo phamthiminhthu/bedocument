@@ -9,4 +9,6 @@ public interface UserService {
     UserDto findByUsername(String username);
 
     String getUsernameByToken(String email);
+
+    UserDto getInformationByToken();
 }
