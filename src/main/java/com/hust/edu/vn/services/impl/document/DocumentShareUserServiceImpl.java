@@ -69,21 +69,6 @@ public class DocumentShareUserServiceImpl implements DocumentShareUserService {
         return false;
     }
 
-
-    @Override
-    public byte[] loadFileFromS3(String documentKey) {
-        User user = baseUtils.getUser();
-        Document document = documentRepository.findByDocumentKeyAndStatusDelete(documentKey, (byte) 0);
-        if(document != null){
-            DocumentShareUser documentShareUser = documentShareUserRepository.findByDocumentAndUser(document, user);
-            if(documentShareUser != null){
-                return awsS3Utils.readFile(document.getUser().getRootPath(), documentKey);
-            }
-            return null;
-        }
-        return null;
-    }
-
     @Override
     public boolean deleteShareDocument(String documentKey, Long id) {
         User user = baseUtils.getUser();

@@ -17,4 +17,5 @@ public interface DocumentShareUserRepository extends JpaRepository<DocumentShare
     boolean existsByDocument(Document document);
 
     List<DocumentShareUser> findAllByDocument(Document document);
+
 }

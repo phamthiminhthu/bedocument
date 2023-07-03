@@ -58,16 +58,16 @@ public class DocumentShareUserController {
     }
 
     // todo: doing check ~~ kieu data tra ve
-    @GetMapping("read/{documentKey}")
-    public ResponseEntity<byte[]> readDocument(@PathVariable(value = "documentKey") String documentKey){
-        byte[] data = documentShareUserService.loadFileFromS3(documentKey);
-        if(data != null ){
-            HttpHeaders httpHeaders = new HttpHeaders();
-            httpHeaders.setContentType(MediaType.APPLICATION_PDF);
-            return ResponseEntity.ok().headers(httpHeaders).body(data);
-        }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-    }
+//    @GetMapping("read/{documentKey}")
+//    public ResponseEntity<byte[]> readDocument(@PathVariable(value = "documentKey") String documentKey){
+//        byte[] data = documentShareUserService.loadFileFromS3(documentKey);
+//        if(data != null ){
+//            HttpHeaders httpHeaders = new HttpHeaders();
+//            httpHeaders.setContentType(MediaType.APPLICATION_PDF);
+//            return ResponseEntity.ok().headers(httpHeaders).body(data);
+//        }
+//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+//    }
     private String applicationUrl(HttpServletRequest servletRequest ) {
         return "https://"
                 + servletRequest.getServerName()

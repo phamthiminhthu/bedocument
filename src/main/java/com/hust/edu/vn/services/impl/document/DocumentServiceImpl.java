@@ -9,6 +9,7 @@ import com.hust.edu.vn.model.DocumentEditModel;
 import com.hust.edu.vn.model.DocumentModel;
 import com.hust.edu.vn.repository.*;
 import com.hust.edu.vn.services.document.*;
+import com.hust.edu.vn.services.user.FollowService;
 import com.hust.edu.vn.utils.AwsS3Utils;
 import com.hust.edu.vn.utils.BaseUtils;
 import com.hust.edu.vn.utils.ExtractDataFileUtils;
@@ -57,9 +58,11 @@ public class DocumentServiceImpl implements DocumentService {
     private final BaseUtils baseUtils;
     private final CollectionHasDocumentRepository collectionHasDocumentRepository;
     private final CollectionRepository collectionRepository;
+
     private final TagService tagService;
     private final TypeDocumentService typeDocumentService;
     private final UrlService urlService;
+    private final FollowService followService;
 //    private final LikeDocumentService likeDocumentService;
 
     @Value("${google.scholar.api.key}")
@@ -76,7 +79,7 @@ public class DocumentServiceImpl implements DocumentService {
                                DocumentShareUserRepository documentShareUserRepository,
                                FollowRepository followRepository,
                                UserRepository userRepository,
-                               LikeDocumentRepository likeDocumentRepository) {
+                               LikeDocumentRepository likeDocumentRepository, FollowService followService) {
         this.baseUtils = baseUtils;
         this.awsS3Utils = awsS3Utils;
         this.modelMapperUtils = modelMapperUtils;
@@ -96,6 +99,7 @@ public class DocumentServiceImpl implements DocumentService {
         this.followRepository = followRepository;
         this.userRepository = userRepository;
         this.likeDocumentRepository = likeDocumentRepository;
+        this.followService = followService;
     }
     @Override
     public Document uploadDocument(MultipartFile multipartFile) {
@@ -130,11 +134,12 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public byte[] loadFileFromS3(String documentKey) {
         User user = baseUtils.getUser();
-        if(user != null){
-            Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(documentKey, user, (byte) 0);
-            if(document != null){
-                return awsS3Utils.readFile(user.getRootPath(), documentKey);
+        Document document = documentRepository.findByDocumentKeyAndStatusDelete(documentKey, (byte) 0);
+        if(document != null){
+            if(document.getUser() == user || document.getDocsPublic() == 1 || documentShareUserRepository.existsByUserAndDocument(user, document)){
+                return awsS3Utils.readFile(document.getUser().getRootPath(), documentKey);
             }
+            return null;
         }
         return null;
     }
@@ -351,7 +356,22 @@ public class DocumentServiceImpl implements DocumentService {
                    userDtoListSuggest.add(modelMapperUtils.mapAllProperties(documentDto.getUser(), UserDto.class));
                }
            }
-           return  new ArrayList<>(userDtoListSuggest);
+           List<UserDto> userSuggested = new ArrayList<>(userDtoListSuggest);
+           if(userSuggested.size() < 10){
+               List<UserDto> userFollowing = followService.getListUserFollowing(user.getUsername());
+               List<User> users = userRepository.findByUsernameNot(user.getUsername());
+               List<String> usernameFollowing = new ArrayList<>();
+               for(UserDto userDto : userFollowing){
+                   usernameFollowing.add(userDto.getUsername());
+               }
+               users.removeIf(userItem -> usernameFollowing.contains(userItem.getUsername()));
+               if(users.size() > 0){
+                   for(User userItem : users){
+                       userDtoListSuggest.add(modelMapperUtils.mapAllProperties(userItem, UserDto.class));
+                   }
+               }
+           }
+           return new ArrayList<>(userDtoListSuggest);
        }
         return null;
     }
@@ -749,54 +769,59 @@ public class DocumentServiceImpl implements DocumentService {
         return CompletableFuture.completedFuture(searchDataDocsBySerApi(multipartFile));
     }
     private DocumentModel searchDataDocsBySerApi(MultipartFile multipartFile){
-        String query = extractDataFileUtils.extractData(multipartFile).replaceAll("\\s+", " ").trim();
-        if(query != null && query.length() > 5){
-            MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
-            queryParams.add("api_key", apiKey);
-            queryParams.add("q", query);
-            String url = UriComponentsBuilder.fromHttpUrl(BASE_URL)
-                    .queryParams(queryParams)
-                    .build()
-                    .toUriString();
-            String response = restTemplate.getForObject(url, String.class);
-            JSONObject obj = new JSONObject(response);
-            if (obj.has("profiles")) {
-                JSONObject objQuery = obj.getJSONObject("profiles");
-                if (objQuery.has("link")) {
-                    String suggestUrl = objQuery.getString("link");
-                    try {
-                        URL sUrl = new URL(suggestUrl);
-                        String sQuery = sUrl.getQuery();
-                        String[] params = sQuery.split("&");
-                        String qValue = null;
-                        for (String param : params) {
-                            if (param.startsWith("q=")) {
-                                qValue = param.substring(2);
-                                break;
+        HashMap<String, String> resultMap = extractDataFileUtils.extractData(multipartFile);
+        log.info("resultMap: " + resultMap);
+        if(resultMap != null && resultMap.get("title") != null) {
+            String query = resultMap.get("title").replaceAll("\\s+", " ").trim();
+            if (query.length() > 5) {
+                MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+                queryParams.add("api_key", apiKey);
+                queryParams.add("q", query);
+                String url = UriComponentsBuilder.fromHttpUrl(BASE_URL)
+                        .queryParams(queryParams)
+                        .build()
+                        .toUriString();
+                String response = restTemplate.getForObject(url, String.class);
+                JSONObject obj = new JSONObject(response);
+                if (obj.has("profiles")) {
+                    JSONObject objQuery = obj.getJSONObject("profiles");
+                    if (objQuery.has("link")) {
+                        String suggestUrl = objQuery.getString("link");
+                        try {
+                            URL sUrl = new URL(suggestUrl);
+                            String sQuery = sUrl.getQuery();
+                            String[] params = sQuery.split("&");
+                            String qValue = null;
+                            for (String param : params) {
+                                if (param.startsWith("q=")) {
+                                    qValue = param.substring(2);
+                                    break;
+                                }
                             }
+                            if (qValue != null) {
+                                qValue = qValue.replace("+", " ");
+                            }
+                            queryParams.set("q", qValue);
+                            String secondUrl = UriComponentsBuilder.fromHttpUrl(BASE_URL)
+                                    .queryParams(queryParams)
+                                    .build()
+                                    .toUriString();
+                            String secondResponse = restTemplate.getForObject(secondUrl, String.class);
+                            JSONObject secondObj = new JSONObject(secondResponse);
+                            resultMap.put("title", qValue);
+                            return getDataDocumentModel(secondObj, resultMap);
+                        } catch (MalformedURLException e) {
+                            throw new RuntimeException(e);
                         }
-                        if (qValue != null) {
-                            qValue = qValue.replace("+", " ");
-                        }
-                        queryParams.set("q", qValue);
-                        String secondUrl = UriComponentsBuilder.fromHttpUrl(BASE_URL)
-                                .queryParams(queryParams)
-                                .build()
-                                .toUriString();
-                        String secondResponse = restTemplate.getForObject(secondUrl, String.class);
-                        JSONObject secondObj = new JSONObject(secondResponse);
-                        return getDataDocumentModel(secondObj, qValue);
-                    } catch (MalformedURLException e) {
-                        throw new RuntimeException(e);
                     }
                 }
+                return getDataDocumentModel(obj, resultMap);
             }
-            return getDataDocumentModel(obj, query);
         }
         return null;
     }
 
-    private DocumentModel getDataDocumentModel(JSONObject response, String query){
+    private DocumentModel getDataDocumentModel(JSONObject response, HashMap<String, String> query){
         DocumentModel docModel = new DocumentModel();
         if(response.has("organic_results")) {
             JSONArray arrResults = response.getJSONArray("organic_results");
@@ -805,7 +830,7 @@ public class DocumentServiceImpl implements DocumentService {
                     JSONObject data = arrResults.getJSONObject(i);
                     if(data.has("title")) {
                         String title = data.getString("title");
-                        String newQuery = query.toLowerCase().replaceAll("[^a-zA-Z0-9]", "").trim();
+                        String newQuery = query.get("title").toLowerCase().replaceAll("[^a-zA-Z0-9]", "").trim();
                         String newTitle = title.toLowerCase().replaceAll("[^a-zA-Z0-9]", "").trim();
                         if (newQuery.contains(newTitle) || newTitle.contains(newQuery) || arrResults.length() < 2) {
                             docModel.setTitle(title);
@@ -853,7 +878,11 @@ public class DocumentServiceImpl implements DocumentService {
             }
         }
         try {
-            String decodedQuery = URLDecoder.decode(query, StandardCharsets.UTF_8);
+            String decodedQuery = URLDecoder.decode(query.get("title"), StandardCharsets.UTF_8);
+            if(query.get("author") != null) {
+                String decodedAuthor = URLDecoder.decode(query.get("author"), StandardCharsets.UTF_8);
+                docModel.setAuthors(decodedAuthor);
+            }
             docModel.setTitle(decodedQuery);
             return docModel;
         } catch (Exception e) {

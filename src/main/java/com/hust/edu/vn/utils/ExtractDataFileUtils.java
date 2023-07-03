@@ -13,125 +13,33 @@ import java.util.*;
 @Slf4j
 public class ExtractDataFileUtils {
 
-    private final AWSExtractImageUtils extractImageUtils;
-
-    public ExtractDataFileUtils(AWSExtractImageUtils extractImageUtils) {
-        this.extractImageUtils = extractImageUtils;
-    }
-
     private File convertMultiPartToFile(MultipartFile file) throws IOException {
-        File convFile = new File(file.getOriginalFilename());
+        File convFile = new File(Objects.requireNonNull(file.getOriginalFilename()));
         FileOutputStream fos = new FileOutputStream(convFile);
         fos.write(file.getBytes());
         fos.close();
         return convFile;
     }
-
-//    private String readFile(File file) throws IOException {
-//        try (InputStream input = new FileInputStream(file)) {
-//            AutoDetectParser parser = new AutoDetectParser();
-//            BodyContentHandler handler = new BodyContentHandler(-1);
-//            Metadata metadata = new Metadata();
-//            ParseContext context = new ParseContext();
-//            parser.parse(input, handler, metadata, context);
-//            String content = handler.toString();
-//            String s_content = content.substring(0, Math.min(content.length(), 1000));
-//            return s_content;
-//        } catch (IOException | TikaException | SAXException e) {
-//            e.printStackTrace();
-//        }
-//        return null;
-//    }
-
-//    private Document openPdfFile(File pdfFile) throws IOException {
-//        return PDF.open(pdfFile);
-//    }
-
-//    private String getTextPdxStream(File file) throws IOException {
-//        try {
-//            Document pdfDoc = openPdfFile(file);
-////            StringWriter writer = new StringWriter();
-////            pdfDoc.pipe(new OutputTarget(writer));
-////            pdfDoc.close();
-////            log.info(writer.toString());
-////            return writer.toString();
-//            String textFromImage = null;
-//            int totalPage = pdfDoc.getPageCnt();
-//            int end = 3;
-//            float fontSizeMax = 0;
-//            int idxBlock = 0;
-//            int idxPage = 0;
-//            if(totalPage < 3) end = totalPage;
-//
-//            for( int i = 0; i < end; i++ ){
-//                Page page = pdfDoc.getPage(i);
-//                List<Image> images = (List<Image>) page.getImages();
-//                if(images.size() > 0){
-//                    BufferedImage bufferedImage = images.get(0).bitmap();
-//                    textFromImage = extractImageUtils.extractImage(bufferedImage) + " ";
-//                }
-//                BlockParent blockParent = page.getTextContent();
-//                int countBlocks = blockParent.getChildCnt();
-//                for(int j = 0; j < countBlocks; j++){
-//                    Block block = blockParent.getChild(j);
-//                    StringWriter writer = new StringWriter();
-//                    block.pipe(new OutputTarget(writer));
-//                    if(block != null){
-//                        for(int k = 0; k < block.getLineCnt(); k++){
-//                            Line line = block.getLine(k);
-//                            if(line.getTextUnitCnt() > 0){
-//                                for(int n = 0; n < line.getTextUnitCnt(); n++){
-//                                    TextUnit unit = line.getTextUnit(n);
-//                                    if(unit != null){
-//                                        float textSize= unit.getFontSize();
-//                                        boolean textBold = unit.getFont().isBold();
-//                                        if (textSize >= fontSizeMax && textBold){
-//                                            fontSizeMax = textSize;
-//                                            idxBlock = j;
-//                                            idxPage = i;
-//                                            break;
-//                                        }
-//                                        if(textSize > fontSizeMax){
-//                                            fontSizeMax = textSize;
-//                                            idxBlock = j;
-//                                            idxPage = i;
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//            Page page = pdfDoc.getPage(idxPage);
-//            BlockParent blockParent = page.getTextContent();
-//            Block block = blockParent.getChild(idxBlock);
-//            StringWriter writer = new StringWriter();
-//            block.pipe(new OutputTarget(writer));
-//            pdfDoc.close();
-//            return writer.toString();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        return null;
-//    }
-
     private String regexResult(String input){
         return input.replaceAll("(?<!^)(?=[A-Z](?![A-Z])|[A-Z][a-z]|\\\\d+\\\\s)\\\\s*", " ");
     }
-    private String getTextItext(File file){
+    private HashMap<String, String> getTextItext(File file){
+        HashMap<String, String> resultAll = new HashMap<>();
         try {
-            List<TextData> listResults= new ArrayList<TextData>();
-            TreeMap<Float, String> result = new TreeMap<>();
+            List<TextData> listResults= new ArrayList<>();
+//            TreeMap<Float, String> result = new TreeMap<>();
             //Create PdfReader instance.
             PdfReader pdfReader = new PdfReader(new FileInputStream(file));
             //Get the number of pages in pdf.
             PdfDocument pdfDoc = new PdfDocument(pdfReader);
             PdfDocumentInfo info = pdfDoc.getDocumentInfo();
             String titleAvailable = info.getTitle();
+            String authorAvailable = info.getAuthor();
+            resultAll.put("title", titleAvailable);
+            resultAll.put("author", authorAvailable);
             //Iterate the pdf through pages.
 
-            PdfDictionary infoDictionary = pdfDoc.getTrailer().getAsDictionary(PdfName.Info);
+//            PdfDictionary infoDictionary = pdfDoc.getTrailer().getAsDictionary(PdfName.Info);
 //            for (PdfName key: infoDictionary.keySet()) {
 //                log.info("key: " + key + " value: " + infoDictionary.getAsDictionary(key));
 //            }
@@ -146,7 +54,7 @@ public class ExtractDataFileUtils {
 //                List<TextData> filteredList = listResults.stream()
 //                        .filter(data -> data.getFontSize1() == 1.0)
 //                        .collect(Collectors.toList());
-                Collections.sort(listResults, Comparator.comparing(TextData::getFontSize1)
+                listResults.sort(Comparator.comparing(TextData::getFontSize1)
                         .thenComparing(TextData::getFontSize2).reversed());
 //                listResults.addAll(0, filteredList);
 //                for (TextData data : listResults) {
@@ -172,7 +80,8 @@ public class ExtractDataFileUtils {
                             StringBuffer sTitle = new StringBuffer();
                             boolean isBoldSecond = listResults.get(count).getIsBold();
                             if(isBold && fTitle.toString().trim().length() > 15 && !isBoldSecond){
-                                return title.append(fTitle.toString()).toString();
+                                resultAll.put("title", title.append(fTitle).toString());
+                                return resultAll;
                             }
                             isBold = false;
                             for (String itext : listTextSecond) {
@@ -202,10 +111,12 @@ public class ExtractDataFileUtils {
                 String resultSearch = title.toString().replaceAll("\\s+", " ");
                 String secondTitleFound = regexResult(resultSearch.replaceAll("(?i).*\\b(?:paper|whitepaper):\\s*", ""));
                 if(secondTitleFound.length() > 0){
-                    return secondTitleFound;
+                    resultAll.put("title", secondTitleFound);
+                    return resultAll;
                 }
                 if(titleAvailable != null){
-                    return titleAvailable;
+                    resultAll.put("title", titleAvailable);
+                    return resultAll;
                 }
                 return null;
             }
@@ -214,11 +125,10 @@ public class ExtractDataFileUtils {
         }
         return null;
     }
-    public String extractData(MultipartFile file) {
+    public HashMap<String, String> extractData(MultipartFile file) {
         try {
             File convFile = convertMultiPartToFile(file);
-            String contentItext = getTextItext(convFile);
-            return contentItext;
+            return getTextItext(convFile);
         } catch (IOException e) {
             e.printStackTrace();
         }
