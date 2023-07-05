@@ -8,7 +8,5 @@ public interface UserService {
     boolean updateProfile(UserModel userModel);
     UserDto findByUsername(String username);
 
-    String getUsernameByToken(String email);
-
     UserDto getInformationByToken();
 }

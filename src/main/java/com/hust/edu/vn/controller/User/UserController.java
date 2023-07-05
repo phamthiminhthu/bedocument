@@ -22,16 +22,6 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/username/show")
-    public ResponseEntity<CustomResponse> getUsernameByEmail(@RequestParam("email") String email){
-        String username = userService.getUsernameByToken(email);
-        if(username == null){
-            return CustomResponse.generateResponse(HttpStatus.NOT_FOUND, "Not found user!");
-        }
-        return CustomResponse.generateResponse(HttpStatus.OK, "User exists", username);
-    }
-
-
     @GetMapping("profile/{username}")
     public ResponseEntity<CustomResponse> getInfoProfile(@PathVariable String username){
         UserDto userDto = userService.getInfoProfile(username);

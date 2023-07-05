@@ -78,11 +78,15 @@ public class FollowServiceImpl implements FollowService {
                 for (Follow follow : listFollower){
                     userDtoList.add(modelMapperUtils.mapAllProperties(follow.getFollower(), UserDto.class));
                 }
-                for(UserDto userDto : userDtoList){
-                    if(followRepository.existsByFollowingIdAndFollower(userDto.getId(), user)){
-                        userDto.setFollower((byte) 1);
+                User currentUser = baseUtils.getUser();
+                if(currentUser != null){
+                    for(UserDto userDto : userDtoList){
+                        if(followRepository.existsByFollowingIdAndFollower(userDto.getId(), currentUser)){
+                            userDto.setFollower((byte) 1);
+                        }
                     }
                 }
+
             }
             return userDtoList;
         }
@@ -100,9 +104,12 @@ public class FollowServiceImpl implements FollowService {
                     User follower = userRepository.findById(follow.getFollowingId()).orElse(null);
                     userDtoList.add(modelMapperUtils.mapAllProperties(follower, UserDto.class));
                 }
-                for(UserDto userDto : userDtoList){
-                    if(followRepository.existsByFollowingIdAndFollower(userDto.getId(), user)){
-                        userDto.setFollower((byte) 1);
+                User currentUser = baseUtils.getUser();
+                if(currentUser != null) {
+                    for (UserDto userDto : userDtoList) {
+                        if (followRepository.existsByFollowingIdAndFollower(userDto.getId(), currentUser)) {
+                            userDto.setFollower((byte) 1);
+                        }
                     }
                 }
             }

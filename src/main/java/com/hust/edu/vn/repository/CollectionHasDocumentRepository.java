@@ -23,5 +23,5 @@ public interface CollectionHasDocumentRepository extends JpaRepository<Collectio
 
     boolean existsByDocumentDocumentKeyAndCollectionIdAndCollectionUser(String key, Long id, User user);
 
-    void deleteAllByCollectionId(Long id);
+    List<CollectionHasDocument> findAllByCollection(Collection collection);
 }

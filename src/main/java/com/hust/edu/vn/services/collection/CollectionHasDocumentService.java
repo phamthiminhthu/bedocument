@@ -16,5 +16,7 @@ public interface CollectionHasDocumentService {
 
     boolean deleteCollectionDocument(Long collectionId, String documentKey);
 
+    boolean moveDocumentToCollection(List<Long> idCollections, List<String> documentKeys);
+
 //    boolean moveDocumentCollection(Long collectionId, List<String> listDocumentKey, List<Long> listCollectionId);
 }

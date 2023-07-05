@@ -1,13 +1,13 @@
 package com.hust.edu.vn.services.impl.group;
 
 import com.hust.edu.vn.dto.GroupDocDto;
-import com.hust.edu.vn.entity.GroupCollectionHasDocument;
+import com.hust.edu.vn.entity.GroupHasDocument;
 import com.hust.edu.vn.entity.GroupDoc;
 import com.hust.edu.vn.entity.GroupShareUser;
 import com.hust.edu.vn.entity.User;
 import com.hust.edu.vn.repository.CollectionRepository;
 import com.hust.edu.vn.repository.GroupDocRepository;
-import com.hust.edu.vn.repository.GroupCollectionHasDocumentRepository;
+import com.hust.edu.vn.repository.GroupHasDocumentRepository;
 import com.hust.edu.vn.repository.GroupShareUserRepository;
 import com.hust.edu.vn.services.document.DocumentService;
 import com.hust.edu.vn.services.group.GroupDocService;
@@ -26,16 +26,16 @@ public class GroupDocServiceImpl implements GroupDocService {
     private final GroupDocRepository groupDocRepository;
     private final ModelMapperUtils modelMapperUtils;
     private final GroupShareUserRepository groupShareUserRepository;
-    private final GroupCollectionHasDocumentRepository groupCollectionHasDocumentRepository;
+    private final GroupHasDocumentRepository groupHasDocumentRepository;
     private final CollectionRepository collectionRepository;
     private final BaseUtils baseUtils;
     private final DocumentService documentService;
 
-    public GroupDocServiceImpl(GroupDocRepository groupDocRepository, ModelMapperUtils modelMapperUtils, GroupShareUserRepository groupShareUserRepository, GroupCollectionHasDocumentRepository groupCollectionHasDocumentRepository, CollectionRepository collectionRepository, BaseUtils baseUtils, DocumentService documentService) {
+    public GroupDocServiceImpl(GroupDocRepository groupDocRepository, ModelMapperUtils modelMapperUtils, GroupShareUserRepository groupShareUserRepository, GroupHasDocumentRepository groupHasDocumentRepository, CollectionRepository collectionRepository, BaseUtils baseUtils, DocumentService documentService) {
         this.groupDocRepository = groupDocRepository;
         this.modelMapperUtils = modelMapperUtils;
         this.groupShareUserRepository = groupShareUserRepository;
-        this.groupCollectionHasDocumentRepository = groupCollectionHasDocumentRepository;
+        this.groupHasDocumentRepository = groupHasDocumentRepository;
         this.collectionRepository = collectionRepository;
         this.baseUtils = baseUtils;
         this.documentService = documentService;
@@ -109,11 +109,11 @@ public class GroupDocServiceImpl implements GroupDocService {
         if(user != null){
             GroupDoc groupDoc = groupDocRepository.findByIdAndUser(groupId, user);
             if (groupDoc != null){
-                List<GroupCollectionHasDocument> groupCollectionHasDocumentList = groupCollectionHasDocumentRepository.findAllByGroup(groupDoc);
+                List<GroupHasDocument> groupHasDocumentList = groupHasDocumentRepository.findAllByGroup(groupDoc);
                 List<String> documentKeys = new ArrayList<>();
-                if(groupCollectionHasDocumentList != null && !groupCollectionHasDocumentList.isEmpty()){
-                    for(GroupCollectionHasDocument groupCollectionHasDocument : groupCollectionHasDocumentList){
-                        documentKeys.add(groupCollectionHasDocument.getDocument().getDocumentKey());
+                if(groupHasDocumentList != null && !groupHasDocumentList.isEmpty()){
+                    for(GroupHasDocument groupHasDocument : groupHasDocumentList){
+                        documentKeys.add(groupHasDocument.getDocument().getDocumentKey());
                     }
                 }
                 documentService.moveToTrash(documentKeys);

@@ -80,15 +80,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String getUsernameByToken(String email) {
-        User user = baseUtils.getUser();
-        if(user != null){
-            return user.getUsername();
-        }
-        return null;
-    }
-
-    @Override
     public UserDto getInformationByToken() {
         User user = baseUtils.getUser();
         if(user!= null){

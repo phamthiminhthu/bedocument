@@ -2,6 +2,7 @@ package com.hust.edu.vn.controller.collection;
 
 import com.hust.edu.vn.common.type.CustomResponse;
 import com.hust.edu.vn.dto.CollectionHasDocumentDto;
+import com.hust.edu.vn.dto.DocumentDto;
 import com.hust.edu.vn.services.collection.CollectionHasDocumentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -14,7 +15,7 @@ import java.util.List;
 
 @RestController
 @Slf4j
-@RequestMapping("/api/v1/owner/management/collection/{collectionId}/document")
+@RequestMapping("/api/v1/owner/management/collection/document")
 public class CollectionHasDocumentController {
 
     private final CollectionHasDocumentService collectionHasDocumentService;
@@ -24,7 +25,7 @@ public class CollectionHasDocumentController {
     }
 
     @PostMapping("create")
-    public ResponseEntity<CustomResponse> createDocumentCollection(@PathVariable(value = "collectionId") Long collectionId, @ModelAttribute(value = "file") MultipartFile file){
+    public ResponseEntity<CustomResponse> createDocumentCollection(@RequestParam(value = "collectionId") Long collectionId, @ModelAttribute(value = "file") MultipartFile file){
         boolean status = collectionHasDocumentService.createDocumentCollection(collectionId, file);
         if(status){
             return CustomResponse.generateResponse(HttpStatus.OK, "Create document in collection successfully");
@@ -33,7 +34,7 @@ public class CollectionHasDocumentController {
     }
 
     @GetMapping("show/all")
-    public ResponseEntity<CustomResponse> showDocumentCollection(@PathVariable(value = "collectionId") Long collectionId){
+    public ResponseEntity<CustomResponse> showDocumentCollection(@RequestParam(value = "collectionId") Long collectionId){
         CollectionHasDocumentDto collectionDocuments = collectionHasDocumentService.getDocumentCollection(collectionId);
         if(collectionDocuments != null ){
             return CustomResponse.generateResponse(HttpStatus.OK, "Show all document in collection successfully", collectionDocuments);
@@ -42,7 +43,7 @@ public class CollectionHasDocumentController {
     }
 
     @PostMapping("update")
-    public ResponseEntity<CustomResponse> updateCollectionDocument(@PathVariable(value = "collectionId") Long oldCollectionIdFirst, @RequestParam(value="newCollectionIdSecond") Long newCollectionIdSecond, @RequestParam(value="documentKey") String documentKey){
+    public ResponseEntity<CustomResponse> updateCollectionDocument(@RequestParam(value = "collectionId") Long oldCollectionIdFirst, @RequestParam(value="newCollectionIdSecond") Long newCollectionIdSecond, @RequestParam(value="documentKey") String documentKey){
         boolean status = collectionHasDocumentService.updateCollectionDocument(oldCollectionIdFirst, newCollectionIdSecond, documentKey);
         if(status){
             return CustomResponse.generateResponse(HttpStatus.OK, "Update collection successfully");
@@ -51,12 +52,29 @@ public class CollectionHasDocumentController {
     }
 
     @PostMapping("delete")
-    public ResponseEntity<CustomResponse> deleteDocumentCollection(@PathVariable(value = "collectionId") Long collectionId, @RequestParam(value="documentKey") String documentKey){
+    public ResponseEntity<CustomResponse> deleteDocumentCollection(@RequestParam(value = "collectionId") Long collectionId, @RequestParam(value="documentKey") String documentKey){
         boolean status = collectionHasDocumentService.deleteCollectionDocument(collectionId, documentKey);
         if(status){
             return CustomResponse.generateResponse(HttpStatus.OK, "Delete document in collection successfully");
         }
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Delete document in collection FAILED");
+    }
+
+    record CollectionsDocumentsList(List<Long> idCollections, List<String> documentKeys ){
+        public List<Long> getIdCollections(){
+            return idCollections;
+        }
+        public List<String> getDocumentKeys(){
+            return documentKeys;
+        }
+    }
+    @PostMapping("move/documents")
+    public ResponseEntity<CustomResponse> moveDocumentToCollection(@RequestBody CollectionsDocumentsList collectionsDocumentsList){
+        boolean status = collectionHasDocumentService.moveDocumentToCollection(collectionsDocumentsList.getIdCollections(), collectionsDocumentsList.getDocumentKeys());
+        if(status){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Move document to collection successfully");
+        }
+        return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Move document to collection failed");
     }
 
 //    record DocumentCollection(List<String> listDocumentKey, List<Long> listCollectionId){

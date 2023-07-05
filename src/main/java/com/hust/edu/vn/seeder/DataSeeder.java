@@ -27,7 +27,7 @@ public class DataSeeder implements CommandLineRunner {
     private DocumentShareUserRepository documentShareUserRepository;
 
     @Autowired
-    private GroupCollectionHasDocumentRepository groupCollectionHasDocumentRepository;
+    private GroupHasDocumentRepository groupHasDocumentRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -85,8 +85,8 @@ public class DataSeeder implements CommandLineRunner {
 
 
         // group collection has documents
-        GroupCollectionHasDocument groupCollectionHasDocument = new GroupCollectionHasDocument(2L, groupDoc, document1, collection, new Date(), new Date());
-        groupCollectionHasDocumentRepository.save(groupCollectionHasDocument);
+        GroupHasDocument groupHasDocument = new GroupHasDocument(2L, groupDoc, document1, new Date(), new Date());
+        groupHasDocumentRepository.save(groupHasDocument);
 
     }
 }

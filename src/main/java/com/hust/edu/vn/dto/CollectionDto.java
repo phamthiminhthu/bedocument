@@ -19,6 +19,7 @@ public class CollectionDto implements Serializable {
     private Long parentCollectionId;
     private UserDto user;
     private String collectionName;
+    private String parentCollectionName;
     private Date createdAt;
     private Date updatedAt;
 }

@@ -6,7 +6,7 @@ import com.hust.edu.vn.model.CollectionModel;
 import com.hust.edu.vn.repository.CollectionHasDocumentRepository;
 import com.hust.edu.vn.repository.CollectionRepository;
 import com.hust.edu.vn.repository.GroupDocRepository;
-import com.hust.edu.vn.repository.GroupCollectionHasDocumentRepository;
+import com.hust.edu.vn.repository.GroupHasDocumentRepository;
 import com.hust.edu.vn.services.group.GroupCollectionHasDocumentService;
 import com.hust.edu.vn.services.group.GroupHasCollectionService;
 import com.hust.edu.vn.utils.BaseUtils;
@@ -21,7 +21,7 @@ import java.util.TreeMap;
 @Service
 @Slf4j
 public class GroupHasCollectionServiceImpl implements GroupHasCollectionService {
-    private final GroupCollectionHasDocumentRepository groupCollectionHasDocumentRepository;
+    private final GroupHasDocumentRepository groupHasDocumentRepository;
     private final BaseUtils baseUtils;
     private final GroupDocRepository groupDocRepository;
     private final ModelMapperUtils modelMapperUtils;
@@ -29,9 +29,9 @@ public class GroupHasCollectionServiceImpl implements GroupHasCollectionService 
     private final CollectionHasDocumentRepository collectionHasDocumentRepository;
     private final GroupCollectionHasDocumentService groupCollectionHasDocumentService;
 
-    public GroupHasCollectionServiceImpl(GroupCollectionHasDocumentRepository groupCollectionHasDocumentRepository, BaseUtils baseUtils, GroupDocRepository groupDocRepository, ModelMapperUtils modelMapperUtils, CollectionRepository collectionRepository,
+    public GroupHasCollectionServiceImpl(GroupHasDocumentRepository groupHasDocumentRepository, BaseUtils baseUtils, GroupDocRepository groupDocRepository, ModelMapperUtils modelMapperUtils, CollectionRepository collectionRepository,
                                          CollectionHasDocumentRepository collectionHasDocumentRepository, GroupCollectionHasDocumentService groupCollectionHasDocumentService) {
-        this.groupCollectionHasDocumentRepository = groupCollectionHasDocumentRepository;
+        this.groupHasDocumentRepository = groupHasDocumentRepository;
         this.baseUtils = baseUtils;
         this.groupDocRepository = groupDocRepository;
         this.modelMapperUtils = modelMapperUtils;
@@ -119,10 +119,10 @@ public class GroupHasCollectionServiceImpl implements GroupHasCollectionService 
                 Collection collection = collectionRepository.findByIdAndGroupDoc(collectionId, groupDoc);
                 if(collection != null){
                     collectionRepository.delete(collection);
-                    List<GroupCollectionHasDocument> groupCollectionHasDocumentList = groupCollectionHasDocumentRepository.findByGroupAndCollectionId(groupDoc, collectionId);
+                    List<GroupHasDocument> groupHasDocumentList = groupHasDocumentRepository.findByGroup(groupDoc);
                     List<String> documentKeys = new ArrayList<>();
-                    for (GroupCollectionHasDocument groupCollectionHasDocument : groupCollectionHasDocumentList){
-                        documentKeys.add(groupCollectionHasDocument.getDocument().getDocumentKey());
+                    for (GroupHasDocument groupHasDocument : groupHasDocumentList){
+                        documentKeys.add(groupHasDocument.getDocument().getDocumentKey());
                     }
                     groupCollectionHasDocumentService.deleteDocumentGroup(groupId, collectionId, documentKeys);
                     while(collection.getParentCollectionId() != null){

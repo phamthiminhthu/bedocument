@@ -13,8 +13,8 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "group_collection_has_document")
-public class GroupCollectionHasDocument {
+@Table(name = "group_has_document")
+public class GroupHasDocument {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "group_docs_id", nullable = false)
@@ -27,10 +27,6 @@ public class GroupCollectionHasDocument {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "collection_id")
-    private Collection collection;
 
     @Column(name = "created_at", nullable = false)
     private Date createdAt = new Date();

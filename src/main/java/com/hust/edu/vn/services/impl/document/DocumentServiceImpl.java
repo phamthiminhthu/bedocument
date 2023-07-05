@@ -49,7 +49,7 @@ public class DocumentServiceImpl implements DocumentService {
     private final TypeDocumentRepository typeDocumentRepository;
     private final TagRepository tagRepository;
     private final UrlRepository urlRepository;
-    private final GroupCollectionHasDocumentRepository groupCollectionHasDocumentRepository;
+    private final GroupHasDocumentRepository groupHasDocumentRepository;
     private final AwsS3Utils awsS3Utils;
     private final ModelMapperUtils modelMapperUtils;
     private final ExtractDataFileUtils extractDataFileUtils;
@@ -72,7 +72,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired
     public DocumentServiceImpl(AwsS3Utils awsS3Utils, ModelMapperUtils modelMapperUtils, ExtractDataFileUtils extractDataFileUtils, RestTemplate restTemplate, DocumentRepository documentRepository, CollectionHasDocumentRepository collectionHasDocumentRepository,
                                BaseUtils baseUtils, CollectionRepository collectionRepository,
-                               GroupCollectionHasDocumentRepository groupCollectionHasDocumentRepository,
+                               GroupHasDocumentRepository groupHasDocumentRepository,
                                UrlRepository urlRepository,
                                TagRepository tagRepository,
                                TypeDocumentRepository typeDocumentRepository, TagService tagService, TypeDocumentService typeDocumentService, UrlService urlService,
@@ -88,7 +88,7 @@ public class DocumentServiceImpl implements DocumentService {
         this.documentRepository = documentRepository;
         this.collectionHasDocumentRepository = collectionHasDocumentRepository;
         this.collectionRepository = collectionRepository;
-        this.groupCollectionHasDocumentRepository = groupCollectionHasDocumentRepository;
+        this.groupHasDocumentRepository = groupHasDocumentRepository;
         this.urlRepository = urlRepository;
         this.tagRepository = tagRepository;
         this.typeDocumentRepository = typeDocumentRepository;
@@ -486,11 +486,11 @@ public class DocumentServiceImpl implements DocumentService {
                                 Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(key, user, (byte) 0);
                                 GroupDoc groupDoc = baseUtils.getGroupDoc(user, id);
                                 if(document != null && groupDoc != null){
-                                    if(!groupCollectionHasDocumentRepository.existsByDocumentAndGroupIdAndCollection(document, id, null)){
-                                        GroupCollectionHasDocument groupCollectionHasDocument = new GroupCollectionHasDocument();
-                                        groupCollectionHasDocument.setGroup(groupDoc);
-                                        groupCollectionHasDocument.setDocument(document);
-                                        groupCollectionHasDocumentRepository.save(groupCollectionHasDocument);
+                                    if(!groupHasDocumentRepository.existsByDocumentAndGroupId(document, id)){
+                                        GroupHasDocument groupHasDocument = new GroupHasDocument();
+                                        groupHasDocument.setGroup(groupDoc);
+                                        groupHasDocument.setDocument(document);
+                                        groupHasDocumentRepository.save(groupHasDocument);
                                     }
                                 }
                             }
@@ -508,12 +508,11 @@ public class DocumentServiceImpl implements DocumentService {
                                     Collection collection = collectionRepository.findById(id).orElse(null);
                                     if(collection != null){
                                         if(collection.getGroupDoc() != null){
-                                            if(!groupCollectionHasDocumentRepository.existsByDocumentAndCollectionId(document, id)){
-                                                GroupCollectionHasDocument groupCollectionHasDocument = new GroupCollectionHasDocument();
-                                                groupCollectionHasDocument.setCollection(collection);
-                                                groupCollectionHasDocument.setDocument(document);
-                                                groupCollectionHasDocument.setGroup(collection.getGroupDoc());
-                                                groupCollectionHasDocumentRepository.save(groupCollectionHasDocument);
+                                            if(!groupHasDocumentRepository.existsByDocument(document)){
+                                                GroupHasDocument groupHasDocument = new GroupHasDocument();
+                                                groupHasDocument.setDocument(document);
+                                                groupHasDocument.setGroup(collection.getGroupDoc());
+                                                groupHasDocumentRepository.save(groupHasDocument);
                                             }
                                         }
 

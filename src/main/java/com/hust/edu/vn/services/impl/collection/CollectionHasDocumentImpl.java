@@ -130,6 +130,36 @@ public class CollectionHasDocumentImpl implements CollectionHasDocumentService {
         return false;
     }
 
+    @Override
+    public boolean moveDocumentToCollection(List<Long> idCollections, List<String> documentKeys) {
+        User user = baseUtils.getUser();
+        if(user != null) {
+            if (idCollections != null && !idCollections.isEmpty()) {
+                for (Long idCollection : idCollections) {
+                    Collection collection = collectionRepository.findByIdAndUser(idCollection, user);
+                    if (collection != null) {
+                        if (documentKeys != null && !documentKeys.isEmpty()) {
+                            for (String documentKey : documentKeys) {
+                                Document document = documentRepository.findByDocumentKeyAndStatusDelete(documentKey, (byte) 0);
+                                if (document != null) {
+                                    if (!collectionHasDocumentRepository.existsByCollectionAndDocument(collection, document)) {
+                                        CollectionHasDocument collectionHasDocument = new CollectionHasDocument();
+                                        collectionHasDocument.setDocument(document);
+                                        collectionHasDocument.setCollection(collection);
+                                        collectionHasDocumentRepository.save(collectionHasDocument);
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
 //    @Override
 //    public boolean moveDocumentCollection(Long collectionId, List<String> listDocumentKey, List<Long> listCollectionId) {
 //        User user =  baseUtils.getUser();

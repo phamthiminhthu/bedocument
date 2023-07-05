@@ -12,11 +12,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/management/group/{groupId}")
-public class GroupCollectionHasDocumentController {
+public class GroupHasDocumentController {
 
     private final GroupCollectionHasDocumentService groupCollectionHasDocumentService;
 
-    public GroupCollectionHasDocumentController(GroupCollectionHasDocumentService groupCollectionHasDocumentService) {
+    public GroupHasDocumentController(GroupCollectionHasDocumentService groupCollectionHasDocumentService) {
         this.groupCollectionHasDocumentService = groupCollectionHasDocumentService;
     }
 
