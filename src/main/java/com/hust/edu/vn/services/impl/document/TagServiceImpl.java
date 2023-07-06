@@ -111,13 +111,32 @@ public class TagServiceImpl implements TagService {
         List<DocumentDto> result = new ArrayList<>();
         if(tags != null && !tags.isEmpty()){
             for(Tag tag : tags){
-                documentDtoList.add(modelMapperUtils.mapAllProperties(tag.getDocument(), DocumentDto.class));
+                if(tag.getDocument().getStatusDelete() == 0){
+                    documentDtoList.add(modelMapperUtils.mapAllProperties(tag.getDocument(), DocumentDto.class));
+                }
             }
             Set<DocumentDto> documentDtoListUnique = new HashSet<>(documentDtoList);
-            log.info(documentDtoListUnique.toString());
             result = new ArrayList<>(documentDtoListUnique);
         }
         return result;
     }
+
+    @Override
+    public List<DocumentDto> findDocumentsPublicByTag(String tagName) {
+        List<Tag> tags = tagRepository.findByTagNameContainingIgnoreCase(tagName);
+        List<DocumentDto> documentDtoList = new ArrayList<>();
+        List<DocumentDto> result = new ArrayList<>();
+        if(tags != null && !tags.isEmpty()){
+            for(Tag tag : tags){
+                if(tag.getDocument().getStatusDelete() == 0 && tag.getDocument().getDocsPublic() == 1){
+                    documentDtoList.add(modelMapperUtils.mapAllProperties(tag.getDocument(), DocumentDto.class));
+                }
+            }
+            Set<DocumentDto> documentDtoListUnique = new HashSet<>(documentDtoList);
+            result = new ArrayList<>(documentDtoListUnique);
+        }
+        return result;
+    }
+
 
 }

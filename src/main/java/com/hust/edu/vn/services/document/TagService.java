@@ -16,4 +16,6 @@ public interface TagService {
     List<TagDto> showAllTag(String documentKey);
 
     List<DocumentDto> findDocumentsByTag(String tagName);
+
+    List<DocumentDto> findDocumentsPublicByTag(String tagName);
 }

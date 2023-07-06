@@ -98,18 +98,5 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return true;
     }
 
-    @Override
-    public boolean changePassword(ChangePasswordModel changePasswordModel) {
-        User user = userRepository.findByEmail(changePasswordModel.getEmail());
-        if (user == null
-                || !passwordEncoder.matches(changePasswordModel.getOldPassword(), user.getPassword())
-                || !changePasswordModel.getNewPassword().equals(changePasswordModel.getConfirmPassword())) {
-            return false;
-        }
-        user.setPassword(passwordEncoder.encode(changePasswordModel.getNewPassword()));
-        userRepository.save(user);
-        return true;
-    }
-
 
 }

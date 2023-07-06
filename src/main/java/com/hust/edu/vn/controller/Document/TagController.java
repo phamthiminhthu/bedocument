@@ -67,9 +67,21 @@ public class TagController {
         }
         return CustomResponse.generateResponse(HttpStatus.NOT_FOUND, "No Tag", listTag);
     }
+//
+//    @GetMapping("public/show/all")
+//    public ResponseEntity<CustomResponse> showAllTagPublic(@RequestParam("documentKey") String documentKey){
+//        List<TagDto> listTag = tagService.showAllTagPublic(documentKey);
+//        if(listTag == null){
+//            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
+//        }
+//        if(listTag.size() > 0){
+//            return CustomResponse.generateResponse(HttpStatus.OK, "Show all successfully", listTag);
+//        }
+//        return CustomResponse.generateResponse(HttpStatus.NOT_FOUND, "No Tag", listTag);
+//    }
 
-    @GetMapping("find/documents")
-    public ResponseEntity<CustomResponse> showTag(@RequestParam("tagName") String tagName){
+    @GetMapping("find/documents/all")
+    public ResponseEntity<CustomResponse> showAllDocumentsByTag(@RequestParam("tagName") String tagName){
         List<DocumentDto> documentDtoList = tagService.findDocumentsByTag(tagName);
         if(documentDtoList == null){
             return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
@@ -79,5 +91,19 @@ public class TagController {
         }
         return CustomResponse.generateResponse(HttpStatus.NOT_FOUND, "Tag Empty", documentDtoList);
     }
+
+    @GetMapping("find/documents/public")
+    public ResponseEntity<CustomResponse> showAllDocumentsPublicByTag(@RequestParam("tagName") String tagName){
+        List<DocumentDto> documentDtoList = tagService.findDocumentsPublicByTag(tagName);
+        if(documentDtoList == null){
+            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
+        }
+        if(documentDtoList.size() > 0){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Show tag successfully", documentDtoList);
+        }
+        return CustomResponse.generateResponse(HttpStatus.NOT_FOUND, "Tag Empty", documentDtoList);
+    }
+
+
 
 }

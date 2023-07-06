@@ -94,11 +94,5 @@ public class AuthenticationController {
                 + servletRequest.getContextPath();
     }
 
-    @PostMapping("change-password-account")
-    public ResponseEntity<CustomResponse> changePasswordAccount(@RequestBody ChangePasswordModel changePasswordModel){
-        boolean status = authenticationService.changePassword(changePasswordModel);
-        return CustomResponse.generateResponse(status);
-    }
-
 
 }

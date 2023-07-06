@@ -3,6 +3,7 @@ package com.hust.edu.vn.controller.user;
 
 import com.hust.edu.vn.common.type.CustomResponse;
 import com.hust.edu.vn.dto.UserDto;
+import com.hust.edu.vn.model.ChangePasswordModel;
 import com.hust.edu.vn.model.UserModel;
 import com.hust.edu.vn.services.user.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -55,5 +56,11 @@ public class UserController {
         }
         return CustomResponse.generateResponse(HttpStatus.OK, "Found", userDto);
     }
+    @PostMapping("change-password-account")
+    public ResponseEntity<CustomResponse> changePasswordAccount(@RequestBody ChangePasswordModel changePasswordModel){
+        boolean status = userService.changePassword(changePasswordModel);
+        return CustomResponse.generateResponse(status);
+    }
+
 
 }

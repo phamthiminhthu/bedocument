@@ -15,4 +15,8 @@ public interface TypeDocumentService {
     boolean deleteTypeDocument(String documentKey, String typeName);
 
     List<DocumentDto> findDocumentByTypeDocument(String typeName);
+
+    List<DocumentDto> findDocumentPublicByTypeDocument(String typeName);
+
+//    List<TypeDocumentDto> showAllTypeDocumentPublic(String documentKey);
 }

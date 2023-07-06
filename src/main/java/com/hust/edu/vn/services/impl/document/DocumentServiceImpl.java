@@ -149,7 +149,7 @@ public class DocumentServiceImpl implements DocumentService {
         User user = baseUtils.getUser();
         if(user != null){
             List<Document> documents = documentRepository.findByUserAndStatusDeleteOrderByCreatedAtDesc(user, (byte) 0);
-            return  getListDocumentsDto(documents);
+            return getListDocumentsDto(documents);
         }
         return null;
     }
@@ -208,11 +208,11 @@ public class DocumentServiceImpl implements DocumentService {
                 List<DocumentDto> documentDtoList = new ArrayList<>();
                 for (Document document : documentList){
                     if(likeDocumentRepository.existsByUserAndDocument(currentUser, document)){
-                        DocumentDto documentDto = modelMapperUtils.mapAllProperties(document, DocumentDto.class);
+                        DocumentDto documentDto = getDocumentDto(document);
                         documentDto.setLiked((byte) 1);
                         documentDtoList.add(documentDto);
                     }else{
-                        DocumentDto documentDto = modelMapperUtils.mapAllProperties(document, DocumentDto.class);
+                        DocumentDto documentDto = getDocumentDto(document);
                         documentDtoList.add(documentDto);
                     }
                 }
@@ -291,12 +291,12 @@ public class DocumentServiceImpl implements DocumentService {
            Set<String> suggestionsTagsListUnique = new HashSet<>(suggestionsTagList);
            List<DocumentDto> suggestionsDocumentDtoList = new ArrayList<>();
            for(String tagUnique : suggestionsTagsListUnique){
-               suggestionsDocumentDtoList.addAll(tagService.findDocumentsByTag(tagUnique));
+               suggestionsDocumentDtoList.addAll(tagService.findDocumentsPublicByTag(tagUnique));
            }
            if(documentDtoList != null && documentDtoList.size() > 0){
                deleteDocumentDtoBetweenMultipleList(suggestionsDocumentDtoList, documentDtoList);
            }
-           return getDocumentDtoListWithListDocumentCurrentDto(user, documentDtoCurrentUser, suggestionsDocumentDtoList);
+           return getDocumentDtoListSuggestedFinal(documentDtoCurrentUser, suggestionsDocumentDtoList);
        }
        return null;
     }
@@ -317,31 +317,15 @@ public class DocumentServiceImpl implements DocumentService {
             Set<String> suggestionsTypesListUnique = new HashSet<>(suggestionsTypeList);
             List<DocumentDto> suggestionsDocumentDtoList = new ArrayList<>();
             for(String typeUnique : suggestionsTypesListUnique){
-                suggestionsDocumentDtoList.addAll(typeDocumentService.findDocumentByTypeDocument(typeUnique));
+                suggestionsDocumentDtoList.addAll(typeDocumentService.findDocumentPublicByTypeDocument(typeUnique));
             }
             if(documentDtoList.size() > 0){
                 deleteDocumentDtoBetweenMultipleList(suggestionsDocumentDtoList, documentDtoList);
             }
-            return getDocumentDtoListWithListDocumentCurrentDto(user, documentDtoCurrentUser, suggestionsDocumentDtoList);
+            return getDocumentDtoListSuggestedFinal(documentDtoCurrentUser, suggestionsDocumentDtoList);
         }
         return null;
     }
-
-    private List<DocumentDto> getDocumentDtoListWithListDocumentCurrentDto(User user, List<DocumentDto> documentDtoCurrentUser, List<DocumentDto> suggestionsDocumentDtoList) {
-        if(documentDtoCurrentUser != null && documentDtoCurrentUser.size() > 0){
-            deleteDocumentDtoBetweenMultipleList(suggestionsDocumentDtoList, documentDtoCurrentUser);
-        }
-        if(suggestionsDocumentDtoList.size() > 0){
-            suggestionsDocumentDtoList.removeIf(obj -> obj.getDocsPublic() == 0);
-            for (DocumentDto doc : suggestionsDocumentDtoList){
-                if(likeDocumentRepository.existsByUserAndDocumentId(user, doc.getId())){
-                    doc.setLiked(((byte) 1));
-                }
-            }
-        }
-        return suggestionsDocumentDtoList;
-    }
-
 
     @Override
     public List<UserDto> getListSuggestUsers() {
@@ -370,8 +354,9 @@ public class DocumentServiceImpl implements DocumentService {
                        userDtoListSuggest.add(modelMapperUtils.mapAllProperties(userItem, UserDto.class));
                    }
                }
+               return new ArrayList<>(userDtoListSuggest);
            }
-           return new ArrayList<>(userDtoListSuggest);
+           return userSuggested;
        }
         return null;
     }
@@ -897,8 +882,6 @@ public class DocumentServiceImpl implements DocumentService {
         documentModel.setTypeDocumentsList(typeDocumentDtoList);
         List<UrlDto> urlDtoList = urlService.showAllUrl(document.getDocumentKey());
         documentModel.setUrls(urlDtoList);
-//        List<UserDto> likeDocumentList = likeDocumentService.showAllUserLikeDocument(document.getDocumentKey());
-//        documentModel.setLikeDocumentList(likeDocumentList);
         return documentModel;
     }
 
@@ -966,8 +949,19 @@ public class DocumentServiceImpl implements DocumentService {
         }
     }
 
-
-
+    private List<DocumentDto> getDocumentDtoListSuggestedFinal(List<DocumentDto> documentDtoCurrentUser, List<DocumentDto> suggestionsDocumentDtoList) {
+        if(documentDtoCurrentUser != null && documentDtoCurrentUser.size() > 0){
+            deleteDocumentDtoBetweenMultipleList(suggestionsDocumentDtoList, documentDtoCurrentUser);
+        }
+        Set<DocumentDto> results = new HashSet<>(suggestionsDocumentDtoList);
+        List<DocumentDto> suggestionsDtoList = new ArrayList<>(results);
+        List<Document> finalResults = new ArrayList<>();
+        for(DocumentDto docDto : suggestionsDtoList){
+            Document document = documentRepository.findById(docDto.getId()).orElse(null);
+            finalResults.add(document);
+        }
+        return getListDocumentsDto(finalResults);
+    }
 
 
 }

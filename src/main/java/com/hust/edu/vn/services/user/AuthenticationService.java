@@ -15,6 +15,5 @@ public interface AuthenticationService {
 
     boolean recoveryPassword(String token, RecoveryPasswordModel recoveryPasswordModel);
 
-    boolean changePassword(ChangePasswordModel recoveryPasswordModel);
 
 }

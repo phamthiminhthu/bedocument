@@ -70,6 +70,26 @@ public class TypeDocumentImpl implements TypeDocumentService {
         return null;
     }
 
+//    @Override
+//    public List<TypeDocumentDto> showAllTypeDocumentPublic(String documentKey) {
+//        User user = baseUtils.getUser();
+//        if (user != null) {
+//            Document document = documentRepository.findByDocumentKeyAndStatusDeleteAndDocsPublic(documentKey, (byte) 0, (byte) 1);
+//            if (document != null && document.getUser().equals(user)) {
+//                List<TypeDocument> listTypeDocument = typeDocumentRepository.findAllByDocument(document);
+//                List<TypeDocumentDto> typeDocumentDtoList = new ArrayList<>();
+//                if (listTypeDocument != null && !listTypeDocument.isEmpty()) {
+//                    for (TypeDocument typeDocument : listTypeDocument) {
+//                        typeDocumentDtoList.add(modelMapperUtils.mapAllProperties(typeDocument, TypeDocumentDto.class));
+//                    }
+//                }
+//                return typeDocumentDtoList;
+//            }
+//            return null;
+//        }
+//        return null;
+//    }
+
     @Override
     public boolean updateTypeDocument(String documentKey, Long id, String typeName) {
         if(typeName == null || id == null) return false;
@@ -118,7 +138,9 @@ public class TypeDocumentImpl implements TypeDocumentService {
             List<DocumentDto> result = new ArrayList<>();
             if(listTypeDocument != null && !listTypeDocument.isEmpty()){
                 for (TypeDocument typeDocument : listTypeDocument){
-                    documentDtoList.add(modelMapperUtils.mapAllProperties(typeDocument.getDocument(), DocumentDto.class));
+                   if(typeDocument.getDocument().getStatusDelete() == 0){
+                       documentDtoList.add(modelMapperUtils.mapAllProperties(typeDocument.getDocument(), DocumentDto.class));
+                   }
                 }
                 Set<DocumentDto> documentsDtoUnique = new HashSet<>(documentDtoList);
                result = new ArrayList<>(documentsDtoUnique);
@@ -127,4 +149,27 @@ public class TypeDocumentImpl implements TypeDocumentService {
         }
         return null;
     }
+
+    @Override
+    public List<DocumentDto> findDocumentPublicByTypeDocument(String typeName) {
+        User user = baseUtils.getUser();
+        if(user != null){
+            List<TypeDocument> listTypeDocument = typeDocumentRepository.findByTypeNameContainingIgnoreCase(typeName);
+            List<DocumentDto> documentDtoList = new ArrayList<>();
+            List<DocumentDto> result = new ArrayList<>();
+            if(listTypeDocument != null && !listTypeDocument.isEmpty()){
+                for (TypeDocument typeDocument : listTypeDocument){
+                    if(typeDocument.getDocument().getStatusDelete() == 0 && typeDocument.getDocument().getDocsPublic() == 1){
+                        documentDtoList.add(modelMapperUtils.mapAllProperties(typeDocument.getDocument(), DocumentDto.class));
+                    }
+                }
+                Set<DocumentDto> documentsDtoUnique = new HashSet<>(documentDtoList);
+                result = new ArrayList<>(documentsDtoUnique);
+            }
+            return result;
+        }
+        return null;
+    }
+
+
 }

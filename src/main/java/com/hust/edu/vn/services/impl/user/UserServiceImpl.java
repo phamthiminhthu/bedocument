@@ -2,6 +2,7 @@ package com.hust.edu.vn.services.impl.user;
 
 import com.hust.edu.vn.dto.UserDto;
 import com.hust.edu.vn.entity.User;
+import com.hust.edu.vn.model.ChangePasswordModel;
 import com.hust.edu.vn.model.UserModel;
 import com.hust.edu.vn.repository.UserRepository;
 import com.hust.edu.vn.services.user.UserService;
@@ -11,6 +12,7 @@ import com.hust.edu.vn.utils.ModelMapperUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -21,15 +23,16 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final ModelMapperUtils modelMapperUtils;
     private final AwsS3Utils awsS3Utils;
-
     private final BaseUtils baseUtils;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, ModelMapperUtils modelMapperUtils, AwsS3Utils awsS3Utils, BaseUtils baseUtils) {
+    public UserServiceImpl(UserRepository userRepository, ModelMapperUtils modelMapperUtils, AwsS3Utils awsS3Utils, BaseUtils baseUtils, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.modelMapperUtils = modelMapperUtils;
         this.awsS3Utils = awsS3Utils;
         this.baseUtils = baseUtils;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -88,6 +91,18 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
+    @Override
+    public boolean changePassword(ChangePasswordModel changePasswordModel) {
+        User user = baseUtils.getUser();
+        if (user == null
+                || !passwordEncoder.matches(changePasswordModel.getOldPassword(), user.getPassword())
+                || !changePasswordModel.getNewPassword().equals(changePasswordModel.getConfirmPassword())) {
+            return false;
+        }
+        user.setPassword(passwordEncoder.encode(changePasswordModel.getNewPassword()));
+        userRepository.save(user);
+        return true;
+    }
     public String getRootPath() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByEmail(email);

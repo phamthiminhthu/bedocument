@@ -44,9 +44,34 @@ public class TypeDocumentController {
         return CustomResponse.generateResponse(HttpStatus.OK, "Empty", documentTypeDtoList);
     }
 
-    @GetMapping("find/typeDocument")
+//    @GetMapping("public/show/all")
+//    public ResponseEntity<CustomResponse> showAllTypeDocumentPublic(@RequestParam(value = "documentKey") String documentKey){
+//        List<TypeDocumentDto> documentTypeDtoList = typeDocumentService.showAllTypeDocumentPublic(documentKey);
+//        if(documentTypeDtoList == null){
+//            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Please login");
+//        }
+//        if(documentTypeDtoList.size() > 0){
+//            return CustomResponse.generateResponse(HttpStatus.OK, "Show all type successfully", documentTypeDtoList);
+//        }
+//        return CustomResponse.generateResponse(HttpStatus.OK, "Empty", documentTypeDtoList);
+//    }
+
+    @GetMapping("find/documents/all")
     public ResponseEntity<CustomResponse> findDocumentByTypeDocument(@RequestParam(value="typeName") String typeName){
         List<DocumentDto> documentDtoList = typeDocumentService.findDocumentByTypeDocument(typeName);
+        if(documentDtoList == null){
+            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Please login");
+        }
+        if(documentDtoList.size() > 0){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Find type successfully", documentDtoList);
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "Empty", documentDtoList);
+    }
+
+
+    @GetMapping("find/documents/public")
+    public ResponseEntity<CustomResponse> findDocumentPublicByTypeDocument(@RequestParam(value="typeName") String typeName){
+        List<DocumentDto> documentDtoList = typeDocumentService.findDocumentPublicByTypeDocument(typeName);
         if(documentDtoList == null){
             return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Please login");
         }

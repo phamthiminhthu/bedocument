@@ -23,4 +23,6 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     List<Document> findAllByUserAndDocsStatusOrderByCreatedAtDesc(User user, byte b);
 
     List<Document> findAllByUserAndDocsPublicOrderByUpdatedAtDesc(User following, byte b);
+
+    Document findByDocumentKeyAndStatusDeleteAndDocsPublic(String documentKey, byte b, byte b1);
 }
