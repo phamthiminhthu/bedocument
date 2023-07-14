@@ -13,4 +13,5 @@ public class CollectionModel {
     @NotBlank
     private String collectionName;
     private Long parentCollectionId;
+    private Long groupId;
 }

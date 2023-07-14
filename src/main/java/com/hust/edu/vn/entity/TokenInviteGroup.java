@@ -1,6 +1,7 @@
 package com.hust.edu.vn.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,24 +11,22 @@ import java.util.Date;
 
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
-@Table(name = "group_has_collection")
-
-public class GroupHasCollection {
+@Table(name = "token_invite_group")
+public class TokenInviteGroup {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "groups_collection_id", nullable = false)
+    @Column(name = "token_invite_group_id", nullable = false)
     private Long id;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+
     @JoinColumn(name = "group_id", nullable = false)
     private GroupDoc group;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "collection_id")
-    private Collection collection;
+    @Column(name = "email", nullable = false)
+    private String email;
 
     @Column(name = "created_at", nullable = false)
     private Date createdAt = new Date();

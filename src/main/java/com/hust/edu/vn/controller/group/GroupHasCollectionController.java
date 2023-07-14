@@ -1,6 +1,7 @@
 package com.hust.edu.vn.controller.group;
 
 import com.hust.edu.vn.common.type.CustomResponse;
+import com.hust.edu.vn.controller.document.DocumentController;
 import com.hust.edu.vn.dto.CollectionDto;
 import com.hust.edu.vn.model.CollectionModel;
 import com.hust.edu.vn.services.group.GroupHasCollectionService;
@@ -30,7 +31,7 @@ public class GroupHasCollectionController {
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Create Collection group FAILED");
     }
 
-    @GetMapping("show/all")
+    @GetMapping("show/by/tree")
     public ResponseEntity<CustomResponse> showAllCollectionGroupDoc(@PathVariable(value = "groupId") Long groupId){
         TreeMap<Long, List<CollectionDto>> collectionDtosList = groupHasCollectionService.showAllCollectionGroupDoc(groupId);
         if(collectionDtosList != null && !collectionDtosList.isEmpty()){
@@ -39,10 +40,23 @@ public class GroupHasCollectionController {
         return CustomResponse.generateResponse(HttpStatus.NOT_FOUND, "No collection found");
     }
 
+    @GetMapping("show/all")
+    public ResponseEntity<CustomResponse> showAllCollectionInGroup(@PathVariable(value="groupId") Long groupId){
+        List<CollectionDto> collectionDtoList = groupHasCollectionService.showAllCollectionInGroup(groupId);
+        if(collectionDtoList == null){
+            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
+        }
+        if(collectionDtoList.size() > 0){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Show all collections in group successfully", collectionDtoList);
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "Empty", collectionDtoList);
+    }
+
+
     //todo: checking ~ update collection in group ( can update collection parent hay k?)
     @PostMapping("update/{collectionId}")
-    public ResponseEntity<CustomResponse> updateCollectionGroupDoc(@PathVariable(value = "groupId") Long groupId, @PathVariable(value = "collectionId") Long collectionId,  @RequestBody CollectionModel collectionModel){
-        boolean status = groupHasCollectionService.updateCollectionGroupDoc(groupId, collectionId, collectionModel);
+    public ResponseEntity<CustomResponse> updateCollectionGroupDoc(@PathVariable(value = "groupId") Long groupId, @PathVariable(value = "collectionId") Long collectionId, @ModelAttribute(value="collectionName") String collectionName){
+        boolean status = groupHasCollectionService.updateCollectionGroupDoc(groupId, collectionId, collectionName);
         if(status){
             return CustomResponse.generateResponse(HttpStatus.OK, "Update collection in group successfully");
         }
@@ -58,5 +72,24 @@ public class GroupHasCollectionController {
         }
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Delete collection Failed");
     }
+
+    record CollectionsDocumentsList(List<Long> idCollections, List<String> documentKeys ){
+        public List<Long> getIdCollections(){
+            return idCollections;
+        }
+        public List<String> getDocumentKeys(){
+            return documentKeys;
+        }
+    }
+
+    @PostMapping("move/documents")
+    public ResponseEntity<CustomResponse> moveDocumentsToCollection(@PathVariable(value = "groupId") Long groupId, @RequestBody CollectionsDocumentsList collectionsDocumentsList){
+        boolean status = groupHasCollectionService.moveDocumentsToCollection(groupId, collectionsDocumentsList.getIdCollections(), collectionsDocumentsList.getDocumentKeys());
+        if(status){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Move Document successfully");
+        }
+        return CustomResponse.generateResponse(HttpStatus.NOT_FOUND, "Move Document failed");
+    }
+
 
 }

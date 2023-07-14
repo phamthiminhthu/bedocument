@@ -89,7 +89,7 @@ public class TagController {
         if(documentDtoList.size() > 0){
             return CustomResponse.generateResponse(HttpStatus.OK, "Show tag successfully", documentDtoList);
         }
-        return CustomResponse.generateResponse(HttpStatus.NOT_FOUND, "Tag Empty", documentDtoList);
+        return CustomResponse.generateResponse(HttpStatus.OK, "Tag Empty", documentDtoList);
     }
 
     @GetMapping("find/documents/public")
@@ -101,7 +101,7 @@ public class TagController {
         if(documentDtoList.size() > 0){
             return CustomResponse.generateResponse(HttpStatus.OK, "Show tag successfully", documentDtoList);
         }
-        return CustomResponse.generateResponse(HttpStatus.NOT_FOUND, "Tag Empty", documentDtoList);
+        return CustomResponse.generateResponse(HttpStatus.OK, "Tag Empty", documentDtoList);
     }
 
 

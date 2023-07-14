@@ -266,7 +266,7 @@ public class DocumentController {
             return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
         }
         if(documentDtoList.size() > 0){
-            return CustomResponse.generateResponse(HttpStatus.OK, "Show Document shared successfully", documentDtoList);
+            return CustomResponse.generateResponse(HttpStatus.OK, "Show Document completed successfully", documentDtoList);
         }
         return CustomResponse.generateResponse(HttpStatus.OK, "Empty", documentDtoList);
     }

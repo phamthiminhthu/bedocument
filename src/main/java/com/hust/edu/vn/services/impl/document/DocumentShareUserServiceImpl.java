@@ -6,6 +6,7 @@ import com.hust.edu.vn.entity.DocumentShareUser;
 import com.hust.edu.vn.entity.User;
 import com.hust.edu.vn.repository.DocumentRepository;
 import com.hust.edu.vn.repository.DocumentShareUserRepository;
+import com.hust.edu.vn.repository.GroupHasDocumentRepository;
 import com.hust.edu.vn.repository.UserRepository;
 import com.hust.edu.vn.services.document.DocumentShareUserService;
 import com.hust.edu.vn.services.user.EmailService;
@@ -21,6 +22,7 @@ import java.util.List;
 @Service
 @Slf4j
 public class DocumentShareUserServiceImpl implements DocumentShareUserService {
+    private final GroupHasDocumentRepository groupHasDocumentRepository;
     private final UserRepository userRepository;
     private final DocumentRepository documentRepository;
     private final BaseUtils baseUtils;
@@ -30,7 +32,8 @@ public class DocumentShareUserServiceImpl implements DocumentShareUserService {
     private final ModelMapperUtils modelMapperUtils;
 
     public DocumentShareUserServiceImpl(DocumentRepository documentRepository, BaseUtils baseUtils, DocumentShareUserRepository documentShareUserRepository,
-                                        UserRepository userRepository, AwsS3Utils awsS3Utils, EmailService emailService, ModelMapperUtils modelMapperUtils) {
+                                        UserRepository userRepository, AwsS3Utils awsS3Utils, EmailService emailService, ModelMapperUtils modelMapperUtils,
+                                        GroupHasDocumentRepository groupHasDocumentRepository) {
         this.documentRepository = documentRepository;
         this.baseUtils = baseUtils;
         this.documentShareUserRepository = documentShareUserRepository;
@@ -38,6 +41,7 @@ public class DocumentShareUserServiceImpl implements DocumentShareUserService {
         this.awsS3Utils = awsS3Utils;
         this.emailService = emailService;
         this.modelMapperUtils = modelMapperUtils;
+        this.groupHasDocumentRepository = groupHasDocumentRepository;
     }
 
 
@@ -93,7 +97,7 @@ public class DocumentShareUserServiceImpl implements DocumentShareUserService {
         Document document = documentRepository.findByDocumentKeyAndStatusDelete(documentKey, (byte) 0);
         if(document != null){
             User user = baseUtils.getUser();
-            if (document.getDocsPublic() == 1 || document.getUser() == user || documentShareUserRepository.existsByUserAndDocument(user, document)) {
+            if (document.getDocsPublic() == 1 || document.getUser() == user || documentShareUserRepository.existsByUserAndDocument(user, document) || groupHasDocumentRepository.existsUserInGroupWithDocument(user, document)) {
                 List<UserDto> userDtoList = new ArrayList<>();
                 userDtoList.add(modelMapperUtils.mapAllProperties(document.getUser(), UserDto.class));
                 List<DocumentShareUser> documentShareUserList = documentShareUserRepository.findAllByDocument(document);

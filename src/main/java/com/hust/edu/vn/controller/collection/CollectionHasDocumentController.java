@@ -77,6 +77,7 @@ public class CollectionHasDocumentController {
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Move document to collection failed");
     }
 
+
 //    record DocumentCollection(List<String> listDocumentKey, List<Long> listCollectionId){
 //        public List<String> getListDocumentKey(){
 //            return listDocumentKey;

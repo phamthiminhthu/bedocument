@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * A DTO for the {@link Collection} entity
@@ -20,6 +21,8 @@ public class CollectionDto implements Serializable {
     private UserDto user;
     private String collectionName;
     private String parentCollectionName;
+    private List<CollectionDto> subCollectionDtoList;
+    private List<DocumentDto> documentDtoList;
     private Date createdAt;
     private Date updatedAt;
 }

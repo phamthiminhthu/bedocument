@@ -32,7 +32,11 @@ public interface CollectionRepository extends JpaRepository<Collection, Long> {
 
     Collection findByIdAndUser(Long id, User user);
 
-    List<Collection> findAllByUser(User user);
-
     List<Collection> findAllByUserAndGroupDoc(User user, GroupDoc o);
+
+    List<Collection> findAllByParentCollectionIdAndGroupDocId(Long id, Long groupId);
+
+    List<Collection> findAllByGroupDocIdAndParentCollectionId(Long groupId, Object o);
+
+    boolean existsByIdAndGroupDoc(Long parentCollectionId, GroupDoc groupDoc);
 }

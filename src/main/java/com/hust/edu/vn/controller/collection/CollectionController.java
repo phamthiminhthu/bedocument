@@ -11,8 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -30,7 +28,7 @@ public class CollectionController {
     public ResponseEntity<CustomResponse> createCollection(@RequestBody CollectionModel collectionModel){
         boolean status = collectionService.createCollection(collectionModel);
         if(status){
-            return CustomResponse.generateResponse(HttpStatus.CREATED, "Create Collection successfully");
+            return CustomResponse.generateResponse(HttpStatus.OK, "Create Collection successfully");
         }
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Create Collection FAILED");
     }
@@ -49,12 +47,16 @@ public class CollectionController {
     }
 
     @GetMapping("details/show/all/{id}")
-    public ResponseEntity<CustomResponse> showAllDetailsCollectionById(@PathVariable(value = "id") Long id){
-        HashMap<String, ArrayList<Object>>  results = collectionService.showAllDetailsCollectionById(id);
-        if( results == null){
+    public ResponseEntity<CustomResponse> showAllDetailsCollectionById(@PathVariable(value = "id") Long id, @RequestParam(value = "groupId") String groupId){
+        Long convertValue = null;
+        if(groupId != null && !groupId.equals("null")){
+            convertValue = Long.parseLong(groupId);
+        }
+        CollectionDto collectionDto = collectionService.showAllDetailsCollectionById(id, convertValue);
+        if(  collectionDto == null){
             return CustomResponse.generateResponse(HttpStatus.OK, "Collection not existed");
         }
-        return CustomResponse.generateResponse(HttpStatus.OK, "Collection existed", results);
+        return CustomResponse.generateResponse(HttpStatus.OK, "Collection existed", collectionDto);
     }
 
     @GetMapping("show/{id}")

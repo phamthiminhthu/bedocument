@@ -1,18 +1,16 @@
 package com.hust.edu.vn.utils;
 
-import com.hust.edu.vn.entity.Document;
-import com.hust.edu.vn.entity.GroupDoc;
-import com.hust.edu.vn.entity.GroupShareUser;
-import com.hust.edu.vn.entity.User;
-import com.hust.edu.vn.repository.DocumentRepository;
-import com.hust.edu.vn.repository.GroupDocRepository;
-import com.hust.edu.vn.repository.GroupShareUserRepository;
-import com.hust.edu.vn.repository.UserRepository;
+import com.hust.edu.vn.dto.DocumentDto;
+import com.hust.edu.vn.dto.TagDto;
+import com.hust.edu.vn.dto.TypeDocumentDto;
+import com.hust.edu.vn.dto.UrlDto;
+import com.hust.edu.vn.entity.*;
+import com.hust.edu.vn.repository.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import javax.print.Doc;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -23,12 +21,21 @@ public class BaseUtils {
     private final GroupDocRepository groupDocRepository;
     private final GroupShareUserRepository groupShareUserRepository;
 
+    private final ModelMapperUtils modelMapperUtils;
+    private final TagRepository tagRepository;
+    private final TypeDocumentRepository typeDocumentRepository;
+    private final UrlRepository urlRepository;
+
     public BaseUtils(UserRepository userRepository, DocumentRepository documentRepository, GroupDocRepository groupDocRepository,
-                     GroupShareUserRepository groupShareUserRepository) {
+                     GroupShareUserRepository groupShareUserRepository, ModelMapperUtils modelMapperUtils, TagRepository tagRepository, TypeDocumentRepository typeDocumentRepository, UrlRepository urlRepository) {
         this.userRepository = userRepository;
         this.documentRepository = documentRepository;
         this.groupDocRepository = groupDocRepository;
         this.groupShareUserRepository = groupShareUserRepository;
+        this.modelMapperUtils = modelMapperUtils;
+        this.tagRepository = tagRepository;
+        this.typeDocumentRepository = typeDocumentRepository;
+        this.urlRepository = urlRepository;
     }
 
     public User getUser(){
@@ -62,4 +69,52 @@ public class BaseUtils {
         }
         return groupDoc;
     }
+
+    public DocumentDto getDocumentDto(Document document){
+
+        if (document != null){
+            DocumentDto documentModel = modelMapperUtils.mapAllProperties(document, DocumentDto.class);
+            List<TagDto> tagDtoList = new ArrayList<>();
+            List<Tag> tagList = tagRepository.findAllByDocument(document);
+            if (tagList != null && !tagList.isEmpty()) {
+                for (Tag tag : tagList) {
+                    tagDtoList.add(modelMapperUtils.mapAllProperties(tag, TagDto.class));
+                }
+            }
+            List<TypeDocument> listTypeDocument = typeDocumentRepository.findAllByDocument(document);
+            List<TypeDocumentDto> typeDocumentDtoList = new ArrayList<>();
+            if(listTypeDocument != null && !listTypeDocument.isEmpty()){
+                for (TypeDocument typeDocument : listTypeDocument){
+                    typeDocumentDtoList.add(modelMapperUtils.mapAllProperties(typeDocument, TypeDocumentDto.class));
+                }
+            }
+
+            List<Url> urlList = urlRepository.findAllByDocument(document);
+            List<UrlDto> urlDtoList = new ArrayList<>();
+            if(urlList != null && !urlList.isEmpty()){
+                for(Url url : urlList){
+                    urlDtoList.add(modelMapperUtils.mapAllProperties(url, UrlDto.class));
+                }
+            }
+            documentModel.setTagDtoList(tagDtoList);
+            documentModel.setTypeDocumentsList(typeDocumentDtoList);
+            documentModel.setUrls(urlDtoList);
+            return documentModel;
+        }
+        return null;
+    }
+
+
+    public List<DocumentDto> getListDocumentsDto(List<Document> documents){
+        List<DocumentDto> documentDtoList = new ArrayList<>();
+        if(documents != null &&  !documents.isEmpty()){
+            for (Document document : documents){
+                DocumentDto documentDto = getDocumentDto(document);
+                documentDtoList.add(documentDto);
+            }
+        }
+        return documentDtoList;
+    }
+
+
 }

@@ -2,12 +2,16 @@ package com.hust.edu.vn.services.impl.document;
 
 import com.hust.edu.vn.dto.DocumentDto;
 import com.hust.edu.vn.dto.TagDto;
+import com.hust.edu.vn.dto.TypeDocumentDto;
+import com.hust.edu.vn.dto.UrlDto;
 import com.hust.edu.vn.entity.Document;
 import com.hust.edu.vn.entity.Tag;
 import com.hust.edu.vn.entity.User;
 import com.hust.edu.vn.repository.DocumentRepository;
 import com.hust.edu.vn.repository.TagRepository;
 import com.hust.edu.vn.services.document.TagService;
+import com.hust.edu.vn.services.document.TypeDocumentService;
+import com.hust.edu.vn.services.document.UrlService;
 import com.hust.edu.vn.utils.BaseUtils;
 import com.hust.edu.vn.utils.ModelMapperUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +27,6 @@ public class TagServiceImpl implements TagService {
     private final DocumentRepository documentRepository;
     private final TagRepository tagRepository;
     private final ModelMapperUtils modelMapperUtils;
-
     public TagServiceImpl(BaseUtils baseUtils, DocumentRepository documentRepository,
                           TagRepository tagRepository, ModelMapperUtils modelMapperUtils) {
         this.baseUtils = baseUtils;
@@ -106,36 +109,42 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public List<DocumentDto> findDocumentsByTag(String tagName) {
-        List<Tag> tags = tagRepository.findByTagNameContainingIgnoreCase(tagName);
-        List<DocumentDto> documentDtoList = new ArrayList<>();
-        List<DocumentDto> result = new ArrayList<>();
-        if(tags != null && !tags.isEmpty()){
-            for(Tag tag : tags){
-                if(tag.getDocument().getStatusDelete() == 0){
-                    documentDtoList.add(modelMapperUtils.mapAllProperties(tag.getDocument(), DocumentDto.class));
+        User user = baseUtils.getUser();
+        if(user != null){
+            List<Tag> tags = tagRepository.findByTagNameContainingIgnoreCase(tagName);
+            List<Document> documentList = new ArrayList<>();
+            List<Document> result = new ArrayList<>();
+            if(tags != null && !tags.isEmpty()){
+                for(Tag tag : tags){
+                    if(tag.getDocument().getStatusDelete() == 0 && tag.getDocument().getUser() == user){
+                        documentList.add(tag.getDocument());
+                    }
                 }
+                Set<Document> documentListUnique = new HashSet<>(documentList);
+                result = new ArrayList<>(documentListUnique);
+
             }
-            Set<DocumentDto> documentDtoListUnique = new HashSet<>(documentDtoList);
-            result = new ArrayList<>(documentDtoListUnique);
+            return baseUtils.getListDocumentsDto(result);
         }
-        return result;
+        return null;
+
     }
 
     @Override
     public List<DocumentDto> findDocumentsPublicByTag(String tagName) {
         List<Tag> tags = tagRepository.findByTagNameContainingIgnoreCase(tagName);
-        List<DocumentDto> documentDtoList = new ArrayList<>();
-        List<DocumentDto> result = new ArrayList<>();
+        List<Document> documentsList = new ArrayList<>();
+        List<Document> result = new ArrayList<>();
         if(tags != null && !tags.isEmpty()){
             for(Tag tag : tags){
                 if(tag.getDocument().getStatusDelete() == 0 && tag.getDocument().getDocsPublic() == 1){
-                    documentDtoList.add(modelMapperUtils.mapAllProperties(tag.getDocument(), DocumentDto.class));
+                    documentsList.add(tag.getDocument());
                 }
             }
-            Set<DocumentDto> documentDtoListUnique = new HashSet<>(documentDtoList);
-            result = new ArrayList<>(documentDtoListUnique);
+            Set<Document> documentListUnique = new HashSet<>(documentsList);
+            result = new ArrayList<>(documentListUnique);
         }
-        return result;
+        return baseUtils.getListDocumentsDto(result);
     }
 
 

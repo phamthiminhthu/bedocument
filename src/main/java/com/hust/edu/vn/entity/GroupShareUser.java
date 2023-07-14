@@ -24,9 +24,6 @@ public class GroupShareUser {
     @JoinColumn(name = "group_id", nullable = false)
     private GroupDoc group;
 
-    @Column(name = "status_accepted")
-    private Byte statusAccept = 0;
-
     @Column(name = "created_at", nullable = false)
     private Date createdAt = new Date();
 

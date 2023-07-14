@@ -2,7 +2,6 @@ package com.hust.edu.vn.services.impl.user;
 
 import com.hust.edu.vn.entity.ResetPasswordToken;
 import com.hust.edu.vn.entity.User;
-import com.hust.edu.vn.model.ChangePasswordModel;
 import com.hust.edu.vn.model.RecoveryPasswordModel;
 import com.hust.edu.vn.model.RegisterModel;
 import com.hust.edu.vn.repository.ResetPasswordTokenRepository;

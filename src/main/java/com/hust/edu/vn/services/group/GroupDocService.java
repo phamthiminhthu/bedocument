@@ -7,8 +7,6 @@ import java.util.List;
 public interface GroupDocService {
     boolean createGroup(String groupDoc);
 
-    List<GroupDocDto> showAllGroup();
-
     GroupDocDto showGroupByGroupId(Long groupId);
 
     boolean updateGroupByGroupId(Long groupId, String groupName);
@@ -16,6 +14,12 @@ public interface GroupDocService {
     boolean deleteGroupByGroupId(Long groupId);
 
     List<GroupDocDto> showAllGroupMember();
+
+    List<GroupDocDto> getALLGroups();
+
+    List<GroupDocDto> showAllGroupByOwner();
+
+    String showGroupNameById(Long groupId);
 
 //    GroupDocDto showGroupMemberByGroupId(Long groupId);
 }

@@ -1,14 +1,11 @@
 package com.hust.edu.vn.services.impl.group;
 
+import com.hust.edu.vn.dto.CollectionDto;
+import com.hust.edu.vn.dto.DocumentDto;
 import com.hust.edu.vn.dto.GroupDocDto;
-import com.hust.edu.vn.entity.GroupHasDocument;
-import com.hust.edu.vn.entity.GroupDoc;
-import com.hust.edu.vn.entity.GroupShareUser;
-import com.hust.edu.vn.entity.User;
-import com.hust.edu.vn.repository.CollectionRepository;
-import com.hust.edu.vn.repository.GroupDocRepository;
-import com.hust.edu.vn.repository.GroupHasDocumentRepository;
-import com.hust.edu.vn.repository.GroupShareUserRepository;
+import com.hust.edu.vn.dto.UserDto;
+import com.hust.edu.vn.entity.*;
+import com.hust.edu.vn.repository.*;
 import com.hust.edu.vn.services.document.DocumentService;
 import com.hust.edu.vn.services.group.GroupDocService;
 import com.hust.edu.vn.utils.BaseUtils;
@@ -22,6 +19,7 @@ import java.util.List;
 @Service
 @Slf4j
 public class GroupDocServiceImpl implements GroupDocService {
+    private final TokenInviteGroupRepository tokenInviteGroupRepository;
 
     private final GroupDocRepository groupDocRepository;
     private final ModelMapperUtils modelMapperUtils;
@@ -31,7 +29,8 @@ public class GroupDocServiceImpl implements GroupDocService {
     private final BaseUtils baseUtils;
     private final DocumentService documentService;
 
-    public GroupDocServiceImpl(GroupDocRepository groupDocRepository, ModelMapperUtils modelMapperUtils, GroupShareUserRepository groupShareUserRepository, GroupHasDocumentRepository groupHasDocumentRepository, CollectionRepository collectionRepository, BaseUtils baseUtils, DocumentService documentService) {
+    public GroupDocServiceImpl(GroupDocRepository groupDocRepository, ModelMapperUtils modelMapperUtils, GroupShareUserRepository groupShareUserRepository, GroupHasDocumentRepository groupHasDocumentRepository, CollectionRepository collectionRepository, BaseUtils baseUtils, DocumentService documentService,
+                               TokenInviteGroupRepository tokenInviteGroupRepository) {
         this.groupDocRepository = groupDocRepository;
         this.modelMapperUtils = modelMapperUtils;
         this.groupShareUserRepository = groupShareUserRepository;
@@ -39,35 +38,48 @@ public class GroupDocServiceImpl implements GroupDocService {
         this.collectionRepository = collectionRepository;
         this.baseUtils = baseUtils;
         this.documentService = documentService;
+        this.tokenInviteGroupRepository = tokenInviteGroupRepository;
     }
 
     @Override
     public boolean createGroup(String groupName) {
         User user = baseUtils.getUser();
-        if(user != null){
-                GroupDoc groupDoc = new GroupDoc();
-                groupDoc.setGroupName(groupName);
-                groupDoc.setUser(user);
-                groupDocRepository.save(groupDoc);
-                return true;
+        if (user != null) {
+            GroupDoc groupDoc = new GroupDoc();
+            groupDoc.setGroupName(groupName);
+            groupDoc.setUser(user);
+            groupDocRepository.save(groupDoc);
+            return true;
         }
         return false;
     }
 
     @Override
-    public List<GroupDocDto> showAllGroup() {
+    public List<GroupDocDto> showAllGroupByOwner() {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             List<GroupDoc> groupDocsList = groupDocRepository.findAllByUser(user);
-            if (groupDocsList != null && !groupDocsList.isEmpty()){
-                List<GroupDocDto> groupDocDtoList = new ArrayList<>();
-                for (GroupDoc groupDoc : groupDocsList){
+            List<GroupDocDto> groupDocDtoList = new ArrayList<>();
+            if (groupDocsList != null && !groupDocsList.isEmpty()) {
+                for (GroupDoc groupDoc : groupDocsList) {
                     GroupDocDto groupDocDto = modelMapperUtils.mapAllProperties(groupDoc, GroupDocDto.class);
+                    groupDocDto.setStatusOwner((byte) 1);
                     groupDocDtoList.add(groupDocDto);
                 }
-                return groupDocDtoList;
             }
-            return null;
+            return groupDocDtoList;
+        }
+        return null;
+    }
+
+    @Override
+    public String showGroupNameById(Long groupId) {
+        User user = baseUtils.getUser();
+        if (user != null) {
+            GroupDoc groupDoc = groupDocRepository.findById(groupId).orElse(null);
+            if (groupDoc != null) {
+                return groupDoc.getGroupName();
+            }
         }
         return null;
     }
@@ -75,10 +87,44 @@ public class GroupDocServiceImpl implements GroupDocService {
     @Override
     public GroupDocDto showGroupByGroupId(Long groupId) {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             GroupDoc groupDoc = baseUtils.getGroupDoc(user, groupId);
-            if(groupDoc != null){
-                return modelMapperUtils.mapAllProperties(groupDoc, GroupDocDto.class);
+            if (groupDoc != null) {
+                GroupDocDto groupDocDto = modelMapperUtils.mapAllProperties(groupDoc, GroupDocDto.class);
+                List<Collection> collectionList = collectionRepository.findAllByGroupDocIdAndParentCollectionId(groupId, null);
+                List<CollectionDto> collectionDtoList = new ArrayList<>();
+                if (collectionList != null && !collectionList.isEmpty()) {
+                    for (Collection collection : collectionList) {
+                        collectionDtoList.add(modelMapperUtils.mapAllProperties(collection, CollectionDto.class));
+                    }
+                }
+                groupDocDto.setCollectionDtoList(collectionDtoList);
+                List<GroupHasDocument> groupHasDocumentList = groupHasDocumentRepository.findAllByGroupId(groupId);
+                List<DocumentDto> documentDtoList = new ArrayList<>();
+                if (groupHasDocumentList != null && !groupHasDocumentList.isEmpty()) {
+                    for (GroupHasDocument groupHasDocument : groupHasDocumentList) {
+                        DocumentDto documentDto = documentService.getDocumentModel(groupHasDocument.getDocument().getDocumentKey());
+                        if (documentDto != null) {
+                            documentDtoList.add(documentDto);
+                        }
+                    }
+                }
+                groupDocDto.setDocumentDtoList(documentDtoList);
+                List<UserDto> userDtoList = new ArrayList<>();
+                List<GroupShareUser> groupShareUsers = groupShareUserRepository.findAllByGroupId(groupId);
+                if (groupShareUsers != null && groupShareUsers.size() > 0) {
+                    for (GroupShareUser groupShareUser : groupShareUsers) {
+                        User groupUser = groupShareUser.getUser();
+                        if (groupUser != null) {
+                            userDtoList.add(modelMapperUtils.mapAllProperties(user, UserDto.class));
+                        }
+                    }
+                    groupDocDto.setUserDtoList(userDtoList);
+                }
+                if (user == groupDoc.getUser()) {
+                    groupDocDto.setStatusOwner((byte) 1);
+                }
+                return groupDocDto;
             }
             return null;
         }
@@ -88,10 +134,10 @@ public class GroupDocServiceImpl implements GroupDocService {
     @Override
     public boolean updateGroupByGroupId(Long groupId, String groupName) {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             GroupDoc groupDoc = baseUtils.getGroupDoc(user, groupId);
-            if(groupDoc != null){
-                if(groupName.length() > 0){
+            if (groupDoc != null) {
+                if (groupName.length() > 0) {
                     groupDoc.setGroupName(groupName);
                     groupDocRepository.save(groupDoc);
                     return true;
@@ -106,17 +152,10 @@ public class GroupDocServiceImpl implements GroupDocService {
     @Override
     public boolean deleteGroupByGroupId(Long groupId) {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             GroupDoc groupDoc = groupDocRepository.findByIdAndUser(groupId, user);
-            if (groupDoc != null){
-                List<GroupHasDocument> groupHasDocumentList = groupHasDocumentRepository.findAllByGroup(groupDoc);
-                List<String> documentKeys = new ArrayList<>();
-                if(groupHasDocumentList != null && !groupHasDocumentList.isEmpty()){
-                    for(GroupHasDocument groupHasDocument : groupHasDocumentList){
-                        documentKeys.add(groupHasDocument.getDocument().getDocumentKey());
-                    }
-                }
-                documentService.moveToTrash(documentKeys);
+            if (groupDoc != null) {
+                groupHasDocumentRepository.deleteByGroupId(groupDoc.getId());
                 groupShareUserRepository.deleteByGroupId(groupDoc.getId());
                 collectionRepository.deleteByGroupDocId(groupDoc.getId());
                 groupDocRepository.delete(groupDoc);
@@ -130,30 +169,28 @@ public class GroupDocServiceImpl implements GroupDocService {
     @Override
     public List<GroupDocDto> showAllGroupMember() {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             List<GroupShareUser> groupShareUsers = groupShareUserRepository.findAllByUser(user);
-            if(groupShareUsers != null && !groupShareUsers.isEmpty()){
-                List<GroupDocDto> groupDocs = new ArrayList<>();
-                for(GroupShareUser groupShareUser: groupShareUsers){
+            List<GroupDocDto> groupDocs = new ArrayList<>();
+            if (groupShareUsers != null && !groupShareUsers.isEmpty()) {
+                for (GroupShareUser groupShareUser : groupShareUsers) {
                     groupDocs.add(modelMapperUtils.mapAllProperties(groupShareUser.getGroup(), GroupDocDto.class));
                 }
-                return groupDocs;
             }
-            return null;
+            return groupDocs;
         }
         return null;
     }
 
-//    @Override
-//    public GroupDocDto showGroupMemberByGroupId(Long groupId) {
-//        User user = baseUtils.getUser();
-//        if(user != null){
-//            GroupShareUser groupShareUser = groupShareUserRepository.findByUserAndGroupId(user, groupId);
-//            if(groupShareUser != null){
-//                return modelMapperUtils.mapAllProperties(groupShareUser.getGroup(), GroupDocDto.class);
-//            }
-//            return null;
-//        }
-//        return null;
-//    }
+    @Override
+    public List<GroupDocDto> getALLGroups() {
+        User user = baseUtils.getUser();
+        if (user != null) {
+            List<GroupDocDto> listGroupsByMember = showAllGroupMember();
+            List<GroupDocDto> listGroupsByOwner = showAllGroupByOwner();
+            listGroupsByOwner.addAll(listGroupsByMember);
+            return listGroupsByOwner;
+        }
+        return null;
+    }
 }

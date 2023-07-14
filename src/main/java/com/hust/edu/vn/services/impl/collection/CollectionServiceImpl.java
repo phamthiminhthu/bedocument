@@ -4,10 +4,12 @@ import com.hust.edu.vn.dto.CollectionDto;
 import com.hust.edu.vn.dto.DocumentDto;
 import com.hust.edu.vn.entity.Collection;
 import com.hust.edu.vn.entity.CollectionHasDocument;
+import com.hust.edu.vn.entity.GroupDoc;
 import com.hust.edu.vn.entity.User;
 import com.hust.edu.vn.model.CollectionModel;
 import com.hust.edu.vn.repository.CollectionHasDocumentRepository;
 import com.hust.edu.vn.repository.CollectionRepository;
+import com.hust.edu.vn.repository.GroupDocRepository;
 import com.hust.edu.vn.services.collection.CollectionService;
 import com.hust.edu.vn.services.document.DocumentService;
 import com.hust.edu.vn.utils.BaseUtils;
@@ -20,6 +22,7 @@ import java.util.*;
 @Service
 @Slf4j
 public class CollectionServiceImpl implements CollectionService {
+    private final GroupDocRepository groupDocRepository;
     private final CollectionRepository collectionRepository;
     private final ModelMapperUtils modelMapperUtils;
 
@@ -31,12 +34,14 @@ public class CollectionServiceImpl implements CollectionService {
 
     public CollectionServiceImpl(CollectionRepository collectionRepository, ModelMapperUtils modelMapperUtils,
                                  CollectionHasDocumentRepository collectionHasDocumentRepository,
-                                 BaseUtils baseUtils, DocumentService documentService) {
+                                 BaseUtils baseUtils, DocumentService documentService,
+                                 GroupDocRepository groupDocRepository) {
         this.collectionRepository = collectionRepository;
         this.modelMapperUtils = modelMapperUtils;
         this.collectionHasDocumentRepository = collectionHasDocumentRepository;
         this.baseUtils = baseUtils;
         this.documentService = documentService;
+        this.groupDocRepository = groupDocRepository;
     }
 
     @Override
@@ -46,18 +51,24 @@ public class CollectionServiceImpl implements CollectionService {
             if(collectionRepository.existsByCollectionNameAndParentCollectionIdAndUserId(collectionModel.getCollectionName(), collectionModel.getParentCollectionId(), user.getId())){
                 return false;
             }
+            Collection newCollection = modelMapperUtils.mapAllProperties(collectionModel, Collection.class);
+            newCollection.setUser(user);
+            if(collectionModel.getGroupId() != null){
+                groupDocRepository.findById(collectionModel.getGroupId()).ifPresent(newCollection::setGroupDoc);
+                return false;
+            }
             if(collectionModel.getParentCollectionId() != null){
                 Collection collection = collectionRepository.findByIdAndUserId(collectionModel.getParentCollectionId(), user.getId());
                 if(collection != null){
-                    Collection newCollection = modelMapperUtils.mapAllProperties(collectionModel, Collection.class);
-                    newCollection.setUser(user);
+                    if(collectionModel.getGroupId() != null){
+                        GroupDoc groupDoc = groupDocRepository.findById(collectionModel.getGroupId()).orElse(null);
+                        newCollection.setGroupDoc(groupDoc);
+                    }
                     collectionRepository.save(newCollection);
                     return true;
                 }
                 return false;
             }else{
-                Collection newCollection = modelMapperUtils.mapAllProperties(collectionModel, Collection.class);
-                newCollection.setUser(user);
                 collectionRepository.save(newCollection);
                 return true;
             }
@@ -126,6 +137,9 @@ public class CollectionServiceImpl implements CollectionService {
         if(user != null){
             Collection collection = collectionRepository.findByIdAndUser(id, user);
             if(collection != null){
+                if(collection.getCollectionName().equals(name)){
+                    return true;
+                }
                 if(!collectionRepository.existsByCollectionNameAndParentCollectionIdAndUserId(name, collection.getParentCollectionId(), user.getId())){
                     collection.setCollectionName(name);
                     collection.setUpdatedAt(new Date());
@@ -159,10 +173,7 @@ public class CollectionServiceImpl implements CollectionService {
                 for(Collection collection : collectionList){
                     CollectionDto collectionDto = modelMapperUtils.mapAllProperties(collection, CollectionDto.class);
                     if(collection.getParentCollectionId() != null){
-                        Collection parentCollection = collectionRepository.findById(collection.getParentCollectionId()).orElse(null);
-                        if(parentCollection != null){
-                            collectionDto.setParentCollectionName(parentCollection.getCollectionName());
-                        }
+                        collectionRepository.findById(collection.getParentCollectionId()).ifPresent(parentCollection -> collectionDto.setParentCollectionName(parentCollection.getCollectionName()));
                     }
                     collectionDtoList.add(collectionDto);
                 }
@@ -195,13 +206,25 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
-    public HashMap<String, ArrayList<Object>> showAllDetailsCollectionById(Long id) {
+    public CollectionDto showAllDetailsCollectionById(Long id, Long groupId) {
         User user = baseUtils.getUser();
         if(user != null){
             Collection collection = collectionRepository.findById(id).orElse(null);
             CollectionDto collectionDto = modelMapperUtils.mapAllProperties(collection, CollectionDto.class);
-            List<Collection> subCollections = collectionRepository.findAllByParentCollectionIdAndUser(collectionDto.getId(), user);
-            List<CollectionHasDocument> collectionHasDocuments = collectionHasDocumentRepository.findAllByCollection(collection);
+            List<Collection> subCollections;
+            if(groupId == null){
+                subCollections = collectionRepository.findAllByParentCollectionIdAndUser(collectionDto.getId(), user);
+            }else{
+                subCollections = collectionRepository.findAllByParentCollectionIdAndGroupDocId(collectionDto.getId(), groupId);
+            }
+            List<CollectionDto> subCollectionDtoList = new ArrayList<>();
+           if(subCollections != null && subCollections.size() > 0){
+               for(Collection collection1 : subCollections){
+                   subCollectionDtoList.add(modelMapperUtils.mapAllProperties(collection1, CollectionDto.class));
+               }
+           }
+            collectionDto.setSubCollectionDtoList(subCollectionDtoList);
+            List<CollectionHasDocument> collectionHasDocuments = collectionHasDocumentRepository.findAllByCollectionOrderByCreatedAtDesc(collection);
             List<DocumentDto> documents = new ArrayList<>();
             if(collectionHasDocuments != null && !collectionHasDocuments.isEmpty()){
                 for(CollectionHasDocument collectionHasDocument : collectionHasDocuments){
@@ -211,12 +234,8 @@ public class CollectionServiceImpl implements CollectionService {
                     }
                 }
             }
-            HashMap<String, ArrayList<Object>> result = new HashMap<>();
-            result.put("documents", new ArrayList<>(documents));
-            result.put("collection", new ArrayList<>(Collections.singletonList(collectionDto)));
-            result.put("subCollections", new ArrayList<>(subCollections));
-            return result;
-
+            collectionDto.setDocumentDtoList(documents);
+            return collectionDto;
         }
         return null;
     }

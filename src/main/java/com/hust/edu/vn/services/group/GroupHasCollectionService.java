@@ -11,7 +11,11 @@ public interface GroupHasCollectionService {
 
     TreeMap<Long, List<CollectionDto>> showAllCollectionGroupDoc(Long groupId);
 
-    boolean updateCollectionGroupDoc(Long groupId, Long collectionId, CollectionModel collectionModel);
+    boolean updateCollectionGroupDoc(Long groupId, Long collectionId, String collectionName);
 
     boolean deleteCollectionGroupDoc(Long groupId, Long collectionId);
+
+    List<CollectionDto> showAllCollectionInGroup(Long groupId);
+
+    boolean moveDocumentsToCollection(Long groupId, List<Long> idCollections, List<String> documentKeys);
 }

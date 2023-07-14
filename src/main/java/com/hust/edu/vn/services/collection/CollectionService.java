@@ -15,7 +15,7 @@ public interface CollectionService {
     boolean updateCollection(Long id, CollectionModel collectionModel);
     boolean deleteCollection(Long id);
 
-    HashMap<String, ArrayList<Object>> showAllDetailsCollectionById(Long id);
+    CollectionDto showAllDetailsCollectionById(Long id, Long groupId);
 
     List<CollectionDto> showAllCollectionParent();
 

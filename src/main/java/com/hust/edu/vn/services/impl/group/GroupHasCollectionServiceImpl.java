@@ -5,9 +5,8 @@ import com.hust.edu.vn.entity.*;
 import com.hust.edu.vn.model.CollectionModel;
 import com.hust.edu.vn.repository.CollectionHasDocumentRepository;
 import com.hust.edu.vn.repository.CollectionRepository;
-import com.hust.edu.vn.repository.GroupDocRepository;
+import com.hust.edu.vn.repository.DocumentRepository;
 import com.hust.edu.vn.repository.GroupHasDocumentRepository;
-import com.hust.edu.vn.services.group.GroupCollectionHasDocumentService;
 import com.hust.edu.vn.services.group.GroupHasCollectionService;
 import com.hust.edu.vn.utils.BaseUtils;
 import com.hust.edu.vn.utils.ModelMapperUtils;
@@ -21,23 +20,22 @@ import java.util.TreeMap;
 @Service
 @Slf4j
 public class GroupHasCollectionServiceImpl implements GroupHasCollectionService {
+    private final DocumentRepository documentRepository;
     private final GroupHasDocumentRepository groupHasDocumentRepository;
     private final BaseUtils baseUtils;
-    private final GroupDocRepository groupDocRepository;
     private final ModelMapperUtils modelMapperUtils;
     private final CollectionRepository collectionRepository;
     private final CollectionHasDocumentRepository collectionHasDocumentRepository;
-    private final GroupCollectionHasDocumentService groupCollectionHasDocumentService;
 
-    public GroupHasCollectionServiceImpl(GroupHasDocumentRepository groupHasDocumentRepository, BaseUtils baseUtils, GroupDocRepository groupDocRepository, ModelMapperUtils modelMapperUtils, CollectionRepository collectionRepository,
-                                         CollectionHasDocumentRepository collectionHasDocumentRepository, GroupCollectionHasDocumentService groupCollectionHasDocumentService) {
+    public GroupHasCollectionServiceImpl(GroupHasDocumentRepository groupHasDocumentRepository, BaseUtils baseUtils, ModelMapperUtils modelMapperUtils, CollectionRepository collectionRepository,
+                                         CollectionHasDocumentRepository collectionHasDocumentRepository,
+                                         DocumentRepository documentRepository) {
         this.groupHasDocumentRepository = groupHasDocumentRepository;
         this.baseUtils = baseUtils;
-        this.groupDocRepository = groupDocRepository;
         this.modelMapperUtils = modelMapperUtils;
         this.collectionRepository = collectionRepository;
         this.collectionHasDocumentRepository = collectionHasDocumentRepository;
-        this.groupCollectionHasDocumentService = groupCollectionHasDocumentService;
+        this.documentRepository = documentRepository;
     }
 
     @Override
@@ -49,7 +47,7 @@ public class GroupHasCollectionServiceImpl implements GroupHasCollectionService 
                 if(collectionRepository.existsByGroupDocAndCollectionNameAndParentCollectionId(groupDoc, collectionModel.getCollectionName(), collectionModel.getParentCollectionId())){
                     return false;
                 }
-                if(collectionModel.getParentCollectionId() == null || collectionRepository.existsByIdAndUserId(collectionModel.getParentCollectionId(), user.getId())){
+                if(collectionModel.getParentCollectionId() == null || collectionRepository.existsByIdAndGroupDoc(collectionModel.getParentCollectionId(), groupDoc )){
                     Collection collection = modelMapperUtils.mapAllProperties(collectionModel, Collection.class);
                     collection.setUser(user);
                     collection.setGroupDoc(groupDoc);
@@ -90,18 +88,24 @@ public class GroupHasCollectionServiceImpl implements GroupHasCollectionService 
     }
 
     @Override
-    public boolean updateCollectionGroupDoc(Long groupId, Long collectionId, CollectionModel collectionModel) {
+    public boolean updateCollectionGroupDoc(Long groupId, Long collectionId, String collectionName) {
         User user = baseUtils.getUser();
         if(user != null){
             GroupDoc groupDoc = baseUtils.getGroupDoc(user, groupId);
             if(groupDoc != null){
                 Collection collection = collectionRepository.findByIdAndGroupDoc(collectionId, groupDoc);
-                Collection collectionParent = collectionRepository.findByIdAndGroupDoc(collectionModel.getParentCollectionId(), groupDoc);
-                if(collection != null && collectionParent != null && collectionModel.getCollectionName() != null){
-                    collection.setCollectionName(collectionModel.getCollectionName());
-                    collection.setParentCollectionId(collectionModel.getParentCollectionId());
-                    collectionRepository.save(collection);
-                    return true;
+                if(collection != null) {
+                    if(collection.getCollectionName().equals(collectionName)){
+                        return true;
+                    }
+                    if (collectionRepository.existsByGroupDocAndCollectionNameAndParentCollectionId(groupDoc, collectionName, collection.getParentCollectionId())) {
+                        return false;
+                    }
+                    if (collectionName != null) {
+                        collection.setCollectionName(collectionName);
+                        collectionRepository.save(collection);
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -118,19 +122,24 @@ public class GroupHasCollectionServiceImpl implements GroupHasCollectionService 
             if(groupDoc != null){
                 Collection collection = collectionRepository.findByIdAndGroupDoc(collectionId, groupDoc);
                 if(collection != null){
-                    collectionRepository.delete(collection);
-                    List<GroupHasDocument> groupHasDocumentList = groupHasDocumentRepository.findByGroup(groupDoc);
-                    List<String> documentKeys = new ArrayList<>();
-                    for (GroupHasDocument groupHasDocument : groupHasDocumentList){
-                        documentKeys.add(groupHasDocument.getDocument().getDocumentKey());
-                    }
-                    groupCollectionHasDocumentService.deleteDocumentGroup(groupId, collectionId, documentKeys);
-                    while(collection.getParentCollectionId() != null){
-                            collection = collectionRepository.findByIdAndGroupDoc(collection.getParentCollectionId(),groupDoc);
-                            collectionRepository.delete(collection);
-                            groupCollectionHasDocumentService.deleteDocumentGroup(groupId, collectionId, documentKeys);
+                    List<CollectionHasDocument> collectionHasDocuments = collectionHasDocumentRepository.findByCollection(collection);
+                    if(collectionHasDocuments != null && !collectionHasDocuments.isEmpty()){
+                        for(CollectionHasDocument collectionHasDocument : collectionHasDocuments){
+                            GroupHasDocument groupHasDocument = groupHasDocumentRepository.findByDocumentAndGroupId(collectionHasDocument.getDocument(), groupId);
+                            if(groupHasDocument != null){
+                                groupHasDocumentRepository.delete(groupHasDocument);
+                            }
 
+                        }
+                        collectionHasDocumentRepository.deleteAll(collectionHasDocuments);
                     }
+                    List<Collection> collectionList = collectionRepository.findAllByParentCollectionIdAndGroupDocId(collection.getId(), groupId);
+                    if(collectionList != null && !collectionList.isEmpty()){
+                        for (Collection collection1 : collectionList){
+                            deleteCollectionGroupDoc(groupId, collection1.getId());
+                        }
+                    }
+                    collectionRepository.delete(collection);
                     return true;
                 }
                 return false;
@@ -139,4 +148,60 @@ public class GroupHasCollectionServiceImpl implements GroupHasCollectionService 
         }
         return false;
     }
+
+    @Override
+    public List<CollectionDto> showAllCollectionInGroup(Long groupId) {
+        User user = baseUtils.getUser();
+        if(user != null){
+            GroupDoc groupDoc = baseUtils.getGroupDoc(user, groupId);
+            if(groupDoc != null){
+                List<CollectionDto> collectionDtoList = new ArrayList<>();
+                List<Collection> collectionList = collectionRepository.findAllByGroupDocId(groupId);
+                if(collectionList != null && !collectionList.isEmpty()){
+                    for(Collection collection : collectionList){
+                        CollectionDto collectionDto = modelMapperUtils.mapAllProperties(collection, CollectionDto.class);
+                        if(collectionDto.getParentCollectionId() != null){
+                            Collection collectionParent = collectionRepository.findByIdAndGroupDoc(collectionDto.getParentCollectionId(), groupDoc);
+                            collectionDto.setParentCollectionName(collectionParent.getCollectionName());
+                        }
+                        collectionDtoList.add(collectionDto);
+                    }
+                }
+                return collectionDtoList;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public boolean moveDocumentsToCollection(Long groupId, List<Long> idCollections, List<String> documentKeys) {
+        User user = baseUtils.getUser();
+        if(user != null){
+            GroupDoc groupDoc = baseUtils.getGroupDoc(user, groupId);
+            if(groupDoc != null){
+                if(idCollections != null && idCollections.size() > 0){
+                    for(Long id: idCollections){
+                        Collection collection = collectionRepository.findByIdAndGroupDoc(id, groupDoc);
+                        if(collection != null){
+                          if(documentKeys != null && documentKeys.size() > 0){
+                              for(String documentKey :  documentKeys){
+                                  Document document = documentRepository.findByDocumentKeyAndStatusDelete(documentKey, (byte) 0);
+                                  if(document != null && !collectionHasDocumentRepository.existsByCollectionAndDocument(collection, document)){
+                                      CollectionHasDocument collectionHasDocument = new CollectionHasDocument();
+                                      collectionHasDocument.setDocument(document);
+                                      collectionHasDocument.setCollection(collection);
+                                      collectionHasDocumentRepository.save(collectionHasDocument);
+                                  }
+                              }
+                          }
+                        }
+                    }
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+
 }

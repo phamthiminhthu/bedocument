@@ -1,12 +1,11 @@
 package com.hust.edu.vn.services.group;
 
 import com.hust.edu.vn.dto.DocumentDto;
-import com.hust.edu.vn.model.DocumentModel;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-public interface GroupCollectionHasDocumentService {
+public interface GroupHasDocumentService {
     boolean createDocument(Long groupId, Long collectionId, MultipartFile file);
 
 //    List<DocumentDto> showAllDocumentGroup(Long groupId);
@@ -15,4 +14,5 @@ public interface GroupCollectionHasDocumentService {
 
     boolean deleteDocumentGroup(Long groupId, Long collectionId,  List<String> documentKeys);
 
+    boolean moveDocumentToGroup(List<Long> idGroups, List<String> documentKeys);
 }
