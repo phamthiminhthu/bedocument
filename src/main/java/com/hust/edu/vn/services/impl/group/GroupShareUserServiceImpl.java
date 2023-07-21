@@ -132,6 +132,27 @@ public class GroupShareUserServiceImpl implements GroupShareUserService {
         return null;
     }
 
+
+    @Override
+    public List<TokenInviteGroupDto> getAllPendingInvitations() {
+        User user = baseUtils.getUser();
+        if(user != null){
+            List<TokenInviteGroup> pendingInvites = tokenInviteGroupRepository.findAllByEmail(user.getEmail());
+            List<TokenInviteGroupDto> tokenInviteGroupsDto = new ArrayList<>();
+            if(pendingInvites != null && pendingInvites.size() > 0) {
+                for (TokenInviteGroup tokenInviteGroup : pendingInvites){
+                    TokenInviteGroupDto tokenInviteGroupDto = modelMapperUtils.mapAllProperties(tokenInviteGroup, TokenInviteGroupDto.class);
+                    tokenInviteGroupDto.setGroupName(tokenInviteGroup.getGroup().getGroupName());
+                    tokenInviteGroupDto.setGroupId(tokenInviteGroup.getGroup().getId());
+                    tokenInviteGroupsDto.add(tokenInviteGroupDto);
+                }
+            }
+            return tokenInviteGroupsDto;
+        }
+        return null;
+    }
+
+
     @Override
     public boolean inviteResendMemberGroup(Long groupId, String emailUser) {
         User user = baseUtils.getUser();
@@ -167,6 +188,20 @@ public class GroupShareUserServiceImpl implements GroupShareUserService {
     }
 
     @Override
+    public boolean declineInviteMember(Long groupId) {
+        User user = baseUtils.getUser();
+        if(user != null){
+            TokenInviteGroup tokenInviteGroup = tokenInviteGroupRepository.findByEmailAndGroupId(user.getEmail(), groupId);
+            if(tokenInviteGroup != null){
+                tokenInviteGroupRepository.delete(tokenInviteGroup);
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    @Override
     public boolean leaveGroup(Long groupId, String emailUser) {
         User user = baseUtils.getUser();
         if(user != null){
@@ -181,7 +216,6 @@ public class GroupShareUserServiceImpl implements GroupShareUserService {
         }
         return false;
     }
-
     @Override
     public List<MemberGroupDto> getMembersGroup(Long groupId) {
         User user = baseUtils.getUser();

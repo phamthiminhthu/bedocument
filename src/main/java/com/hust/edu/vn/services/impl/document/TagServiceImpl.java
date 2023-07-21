@@ -2,16 +2,13 @@ package com.hust.edu.vn.services.impl.document;
 
 import com.hust.edu.vn.dto.DocumentDto;
 import com.hust.edu.vn.dto.TagDto;
-import com.hust.edu.vn.dto.TypeDocumentDto;
-import com.hust.edu.vn.dto.UrlDto;
 import com.hust.edu.vn.entity.Document;
 import com.hust.edu.vn.entity.Tag;
 import com.hust.edu.vn.entity.User;
 import com.hust.edu.vn.repository.DocumentRepository;
+import com.hust.edu.vn.repository.LikeDocumentRepository;
 import com.hust.edu.vn.repository.TagRepository;
 import com.hust.edu.vn.services.document.TagService;
-import com.hust.edu.vn.services.document.TypeDocumentService;
-import com.hust.edu.vn.services.document.UrlService;
 import com.hust.edu.vn.utils.BaseUtils;
 import com.hust.edu.vn.utils.ModelMapperUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -22,17 +19,20 @@ import java.util.*;
 @Service
 @Slf4j
 public class TagServiceImpl implements TagService {
+    private final LikeDocumentRepository likeDocumentRepository;
 
     private final BaseUtils baseUtils;
     private final DocumentRepository documentRepository;
     private final TagRepository tagRepository;
     private final ModelMapperUtils modelMapperUtils;
     public TagServiceImpl(BaseUtils baseUtils, DocumentRepository documentRepository,
-                          TagRepository tagRepository, ModelMapperUtils modelMapperUtils) {
+                          TagRepository tagRepository, ModelMapperUtils modelMapperUtils,
+                          LikeDocumentRepository likeDocumentRepository) {
         this.baseUtils = baseUtils;
         this.documentRepository = documentRepository;
         this.tagRepository = tagRepository;
         this.modelMapperUtils = modelMapperUtils;
+        this.likeDocumentRepository = likeDocumentRepository;
     }
 
     @Override
@@ -132,19 +132,32 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public List<DocumentDto> findDocumentsPublicByTag(String tagName) {
-        List<Tag> tags = tagRepository.findByTagNameContainingIgnoreCase(tagName);
-        List<Document> documentsList = new ArrayList<>();
-        List<Document> result = new ArrayList<>();
-        if(tags != null && !tags.isEmpty()){
-            for(Tag tag : tags){
-                if(tag.getDocument().getStatusDelete() == 0 && tag.getDocument().getDocsPublic() == 1){
-                    documentsList.add(tag.getDocument());
+        User user = baseUtils.getUser();
+        if(user != null){
+            List<Tag> tags = tagRepository.findByTagNameContainingIgnoreCase(tagName);
+            List<Document> documentsList = new ArrayList<>();
+            List<Document> result = new ArrayList<>();
+            List<DocumentDto> documentDtoList = new ArrayList<>();
+            if(tags != null && !tags.isEmpty()){
+                for(Tag tag : tags){
+                    if(tag.getDocument().getStatusDelete() == 0 && tag.getDocument().getDocsPublic() == 1){
+                        documentsList.add(tag.getDocument());
+                    }
+                }
+                Set<Document> documentListUnique = new HashSet<>(documentsList);
+                result = new ArrayList<>(documentListUnique);
+            }
+            documentDtoList = baseUtils.getListDocumentsDto(result);
+            if(documentDtoList != null && !documentsList.isEmpty()){
+                for (DocumentDto documentDto : documentDtoList){
+                    if(likeDocumentRepository.existsByUserAndDocumentId(user, documentDto.getId())){
+                        documentDto.setLiked((byte) 1);
+                    }
                 }
             }
-            Set<Document> documentListUnique = new HashSet<>(documentsList);
-            result = new ArrayList<>(documentListUnique);
+            return documentDtoList;
         }
-        return baseUtils.getListDocumentsDto(result);
+        return null;
     }
 
 

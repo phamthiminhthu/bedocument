@@ -25,4 +25,8 @@ public interface GroupShareUserService {
     boolean cancelInviteMember(Long groupId, String emailUser);
 
     boolean leaveGroup(Long groupId, String emailUser);
+
+    List<TokenInviteGroupDto> getAllPendingInvitations();
+
+    boolean declineInviteMember(Long groupId);
 }

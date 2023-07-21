@@ -98,38 +98,38 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
 
-    @Override
-    public boolean updateCollection(Long id, CollectionModel collectionModel) {
-        User user = baseUtils.getUser();
-        if(user != null){
-            Collection collection = collectionRepository.findByIdAndUserId(id, user.getId());
-            if(collection != null){
-                if(collection.getCollectionName().equals(collectionModel.getCollectionName())){
-                    if((collectionModel.getParentCollectionId() == null && !collectionRepository.existsByCollectionNameAndParentCollectionIdAndUserId(collection.getCollectionName(), null, user.getId()))  || (collectionRepository.existsByIdAndUserId(collectionModel.getParentCollectionId(), user.getId()))){
-                        collection.setCollectionName(collectionModel.getCollectionName());
-                        collection.setParentCollectionId(collectionModel.getParentCollectionId());
-                        collection.setUpdatedAt(new Date());
-                        collectionRepository.save(collection);
-                        return true;
-                    }
-                    return false;
-                }else{
-                    if(collectionRepository.existsByCollectionNameAndParentCollectionIdAndUserId(collectionModel.getCollectionName(), collectionModel.getParentCollectionId(), user.getId())){
-                        return false;
-                    }else{
-                        if(collectionRepository.existsByIdAndUserId(collectionModel.getParentCollectionId(), user.getId())){
-                            collection.setCollectionName(collectionModel.getCollectionName());
-                            collection.setParentCollectionId(collectionModel.getParentCollectionId());
-                            collection.setUpdatedAt(new Date());
-                            collectionRepository.save(collection);
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
+//    @Override
+//    public boolean updateCollection(Long id, CollectionModel collectionModel) {
+//        User user = baseUtils.getUser();
+//        if(user != null){
+//            Collection collection = collectionRepository.findByIdAndUserId(id, user.getId());
+//            if(collection != null){
+//                if(collection.getCollectionName().equals(collectionModel.getCollectionName())){
+//                    if((collectionModel.getParentCollectionId() == null && !collectionRepository.existsByCollectionNameAndParentCollectionIdAndUserId(collection.getCollectionName(), null, user.getId()))  || (collectionRepository.existsByIdAndUserId(collectionModel.getParentCollectionId(), user.getId()))){
+//                        collection.setCollectionName(collectionModel.getCollectionName());
+//                        collection.setParentCollectionId(collectionModel.getParentCollectionId());
+//                        collection.setUpdatedAt(new Date());
+//                        collectionRepository.save(collection);
+//                        return true;
+//                    }
+//                    return false;
+//                }else{
+//                    if(collectionRepository.existsByCollectionNameAndParentCollectionIdAndUserId(collectionModel.getCollectionName(), collectionModel.getParentCollectionId(), user.getId())){
+//                        return false;
+//                    }else{
+//                        if(collectionRepository.existsByIdAndUserId(collectionModel.getParentCollectionId(), user.getId())){
+//                            collection.setCollectionName(collectionModel.getCollectionName());
+//                            collection.setParentCollectionId(collectionModel.getParentCollectionId());
+//                            collection.setUpdatedAt(new Date());
+//                            collectionRepository.save(collection);
+//                            return true;
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        return false;
+//    }
 
     @Override
     public boolean renameCollection(Long id, String name) {
@@ -151,17 +151,17 @@ public class CollectionServiceImpl implements CollectionService {
         return false;
     }
 
-    @Override
-    public CollectionDto showCollectionById(Long id) {
-        User user = baseUtils.getUser();
-        if(user != null){
-            Collection collection = collectionRepository.findByIdAndUser(id, user);
-            if(collection != null){
-                return modelMapperUtils.mapAllProperties(collection, CollectionDto.class);
-            }
-        }
-        return null;
-    }
+//    @Override
+//    public CollectionDto showCollectionById(Long id) {
+//        User user = baseUtils.getUser();
+//        if(user != null){
+//            Collection collection = collectionRepository.findByIdAndUser(id, user);
+//            if(collection != null){
+//                return modelMapperUtils.mapAllProperties(collection, CollectionDto.class);
+//            }
+//        }
+//        return null;
+//    }
 
     @Override
     public List<CollectionDto> showAllNameCollectionWithoutGroupDoc() {

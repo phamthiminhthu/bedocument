@@ -59,14 +59,14 @@ public class CollectionController {
         return CustomResponse.generateResponse(HttpStatus.OK, "Collection existed", collectionDto);
     }
 
-    @GetMapping("show/{id}")
-    public ResponseEntity<CustomResponse> showCollectionById(@PathVariable(value = "id") Long id){
-        CollectionDto collectionDto = collectionService.showCollectionById(id);
-        if( collectionDto == null){
-            return CustomResponse.generateResponse(HttpStatus.OK, "Collection not existed");
-        }
-        return CustomResponse.generateResponse(HttpStatus.OK, "Collection existed", collectionDto);
-    }
+//    @GetMapping("show/{id}")
+//    public ResponseEntity<CustomResponse> showCollectionById(@PathVariable(value = "id") Long id){
+//        CollectionDto collectionDto = collectionService.showCollectionById(id);
+//        if( collectionDto == null){
+//            return CustomResponse.generateResponse(HttpStatus.OK, "Collection not existed");
+//        }
+//        return CustomResponse.generateResponse(HttpStatus.OK, "Collection existed", collectionDto);
+//    }
 
     @GetMapping("parent/show/all")
     public ResponseEntity<CustomResponse> showAllCollectionParent(){
@@ -93,14 +93,14 @@ public class CollectionController {
     }
 
 
-    @PostMapping("update/{id}")
-    public ResponseEntity<CustomResponse> updateCollection(@PathVariable(value="id") Long id, @RequestBody CollectionModel collectionModel){
-        boolean status = collectionService.updateCollection(id, collectionModel);
-        if(status){
-            return CustomResponse.generateResponse(HttpStatus.OK, "Update Collection successfully");
-        }
-        return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Update Collection FAILED");
-    }
+//    @PostMapping("update/{id}")
+//    public ResponseEntity<CustomResponse> updateCollection(@PathVariable(value="id") Long id, @RequestBody CollectionModel collectionModel){
+//        boolean status = collectionService.updateCollection(id, collectionModel);
+//        if(status){
+//            return CustomResponse.generateResponse(HttpStatus.OK, "Update Collection successfully");
+//        }
+//        return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Update Collection FAILED");
+//    }
 
     @PostMapping("rename/{id}")
     public ResponseEntity<CustomResponse> renameCollection(@PathVariable(value="id") Long id, @RequestParam(value="name") String name){

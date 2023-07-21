@@ -4,12 +4,15 @@ import com.hust.edu.vn.dto.UserDto;
 import com.hust.edu.vn.model.ChangePasswordModel;
 import com.hust.edu.vn.model.UserModel;
 
+import java.util.List;
+
 public interface UserService {
     UserDto getInfoProfile(String username);
     boolean updateProfile(UserModel userModel);
-    UserDto findByUsername(String username);
-
     UserDto getInformationByToken();
 
     boolean changePassword(ChangePasswordModel changePasswordModel);
+    List<UserDto> findUsersByUsernameOrFullName(String username);
+
+    UserDto findByUserByEmail(String email);
 }

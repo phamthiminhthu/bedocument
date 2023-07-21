@@ -1,17 +1,14 @@
 package com.hust.edu.vn.services.impl.document;
 
 import com.hust.edu.vn.dto.DocumentDto;
-import com.hust.edu.vn.dto.TagDto;
 import com.hust.edu.vn.dto.TypeDocumentDto;
-import com.hust.edu.vn.dto.UrlDto;
 import com.hust.edu.vn.entity.Document;
 import com.hust.edu.vn.entity.TypeDocument;
 import com.hust.edu.vn.entity.User;
 import com.hust.edu.vn.repository.DocumentRepository;
+import com.hust.edu.vn.repository.LikeDocumentRepository;
 import com.hust.edu.vn.repository.TypeDocumentRepository;
-import com.hust.edu.vn.services.document.TagService;
 import com.hust.edu.vn.services.document.TypeDocumentService;
-import com.hust.edu.vn.services.document.UrlService;
 import com.hust.edu.vn.utils.BaseUtils;
 import com.hust.edu.vn.utils.ModelMapperUtils;
 import org.springframework.stereotype.Service;
@@ -25,13 +22,16 @@ public class TypeDocumentImpl implements TypeDocumentService {
     private final BaseUtils baseUtils;
     private final DocumentRepository documentRepository;
     private final ModelMapperUtils modelMapperUtils;
+    private final LikeDocumentRepository likeDocumentRepository;
 
     public TypeDocumentImpl(TypeDocumentRepository typeDocumentRepository, BaseUtils baseUtils,
-                            DocumentRepository documentRepository, ModelMapperUtils modelMapperUtils) {
+                            DocumentRepository documentRepository, ModelMapperUtils modelMapperUtils,
+                            LikeDocumentRepository likeDocumentRepository) {
         this.typeDocumentRepository = typeDocumentRepository;
         this.baseUtils = baseUtils;
         this.documentRepository = documentRepository;
         this.modelMapperUtils = modelMapperUtils;
+        this.likeDocumentRepository = likeDocumentRepository;
     }
 
     @Override
@@ -73,26 +73,6 @@ public class TypeDocumentImpl implements TypeDocumentService {
         }
         return null;
     }
-
-//    @Override
-//    public List<TypeDocumentDto> showAllTypeDocumentPublic(String documentKey) {
-//        User user = baseUtils.getUser();
-//        if (user != null) {
-//            Document document = documentRepository.findByDocumentKeyAndStatusDeleteAndDocsPublic(documentKey, (byte) 0, (byte) 1);
-//            if (document != null && document.getUser().equals(user)) {
-//                List<TypeDocument> listTypeDocument = typeDocumentRepository.findAllByDocument(document);
-//                List<TypeDocumentDto> typeDocumentDtoList = new ArrayList<>();
-//                if (listTypeDocument != null && !listTypeDocument.isEmpty()) {
-//                    for (TypeDocument typeDocument : listTypeDocument) {
-//                        typeDocumentDtoList.add(modelMapperUtils.mapAllProperties(typeDocument, TypeDocumentDto.class));
-//                    }
-//                }
-//                return typeDocumentDtoList;
-//            }
-//            return null;
-//        }
-//        return null;
-//    }
 
     @Override
     public boolean updateTypeDocument(String documentKey, Long id, String typeName) {
@@ -161,6 +141,7 @@ public class TypeDocumentImpl implements TypeDocumentService {
             List<TypeDocument> listTypeDocument = typeDocumentRepository.findByTypeNameContainingIgnoreCase(typeName);
             List<Document> documentList = new ArrayList<>();
             List<Document> result = new ArrayList<>();
+            List<DocumentDto> documentDtoList = new ArrayList<>();
             if(listTypeDocument != null && !listTypeDocument.isEmpty()){
                 for (TypeDocument typeDocument : listTypeDocument){
                     if(typeDocument.getDocument().getStatusDelete() == 0 && typeDocument.getDocument().getDocsPublic() == 1){
@@ -170,7 +151,15 @@ public class TypeDocumentImpl implements TypeDocumentService {
                 Set<Document> documentsUnique = new HashSet<>(documentList);
                 result = new ArrayList<>(documentsUnique);
             }
-            return baseUtils.getListDocumentsDto(result);
+            documentDtoList = baseUtils.getListDocumentsDto(result);
+            if(documentDtoList != null && !documentDtoList.isEmpty()){
+                for(DocumentDto documentDto : documentDtoList){
+                    if(likeDocumentRepository.existsByUserAndDocumentId(user, documentDto.getId())){
+                        documentDto.setLiked((byte) 1);
+                    }
+                }
+            }
+            return documentDtoList;
         }
         return null;
     }

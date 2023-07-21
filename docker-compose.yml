@@ -10,8 +10,10 @@ services:
       - "3306:3306"
     volumes:
       - ./tmp/db:/var/lib/mysql
-
+      
   web:
+    # platform: linux/amd64
+    # image: phamthiminhthu2k0/docskanry
     build:
       context: .
       dockerfile: Dockerfile

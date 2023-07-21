@@ -27,7 +27,6 @@ public class ExtractDataFileUtils {
         HashMap<String, String> resultAll = new HashMap<>();
         try {
             List<TextData> listResults= new ArrayList<>();
-//            TreeMap<Float, String> result = new TreeMap<>();
             //Create PdfReader instance.
             PdfReader pdfReader = new PdfReader(new FileInputStream(file));
             //Get the number of pages in pdf.
@@ -37,12 +36,6 @@ public class ExtractDataFileUtils {
             String authorAvailable = info.getAuthor();
             resultAll.put("title", titleAvailable);
             resultAll.put("author", authorAvailable);
-            //Iterate the pdf through pages.
-
-//            PdfDictionary infoDictionary = pdfDoc.getTrailer().getAsDictionary(PdfName.Info);
-//            for (PdfName key: infoDictionary.keySet()) {
-//                log.info("key: " + key + " value: " + infoDictionary.getAsDictionary(key));
-//            }
 
             for(int i=1; i<=3;  i++) {
                 SemTextExtractionStrategy strategy = new SemTextExtractionStrategy();
@@ -51,18 +44,10 @@ public class ExtractDataFileUtils {
                 listResults.addAll(results);
             }
             if(listResults.size() > 0){
-//                List<TextData> filteredList = listResults.stream()
-//                        .filter(data -> data.getFontSize1() == 1.0)
-//                        .collect(Collectors.toList());
                 listResults.sort(Comparator.comparing(TextData::getFontSize1)
                         .thenComparing(TextData::getFontSize2).reversed());
-//                listResults.addAll(0, filteredList);
-//                for (TextData data : listResults) {
-//                    log.info("text data: " + data.toString());
-//                }
                 StringBuffer title = new StringBuffer();
                 int count = 0;
-                log.info("size" + listResults.size());
                 while(listResults.size() > 0 && title.length() < 30 && count < listResults.size()){
                     List<String> listTextFirst = listResults.get(count).getTextInfos();
                     StringBuffer fTitle = new StringBuffer();
@@ -88,7 +73,6 @@ public class ExtractDataFileUtils {
                                 sTitle.append(itext);
                             }
                             if(fTitle.toString().toLowerCase().replaceAll("[^a-zA-Z0-9\\s]", "").trim().equals(sTitle.toString().toLowerCase().replaceAll("[^a-zA-Z0-9\\s]", "").trim())){
-                                check = true;
                                 ++count;
                             }else{
                                 check = false;

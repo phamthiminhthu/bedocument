@@ -12,7 +12,7 @@ import java.util.TreeMap;
 public interface CollectionService {
     boolean createCollection(CollectionModel collectionModel);
     TreeMap<Long, List<Collection>> showCollection();
-    boolean updateCollection(Long id, CollectionModel collectionModel);
+//    boolean updateCollection(Long id, CollectionModel collectionModel);
     boolean deleteCollection(Long id);
 
     CollectionDto showAllDetailsCollectionById(Long id, Long groupId);
@@ -21,7 +21,7 @@ public interface CollectionService {
 
     boolean renameCollection(Long id, String name);
 
-    CollectionDto showCollectionById(Long id);
+//    CollectionDto showCollectionById(Long id);
 
     List<CollectionDto> showAllNameCollectionWithoutGroupDoc();
 }

@@ -1,7 +1,6 @@
 package com.hust.edu.vn.utils;
 
 
-import com.amazonaws.services.kafka.model.S3;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import lombok.extern.slf4j.Slf4j;
@@ -13,8 +12,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.Date;
+import java.util.Objects;
 
 @Component
 @Slf4j
@@ -31,14 +30,14 @@ public class AwsS3Utils {
     }
 
     private File convertMultiPartToFile(MultipartFile file) throws IOException {
-        File convFile = new File(file.getOriginalFilename());
+        File convFile = new File(Objects.requireNonNull(file.getOriginalFilename()));
         FileOutputStream fos = new FileOutputStream(convFile);
         fos.write(file.getBytes());
         fos.close();
         return convFile;
     }
     private String generateFileName(MultipartFile multiPart) {
-        return new Date().getTime() + "-" + multiPart.getOriginalFilename().replace(" ", "_");
+        return new Date().getTime() + "-" + Objects.requireNonNull(multiPart.getOriginalFilename()).replace(" ", "_");
     }
     private void uploadAvatarTos3bucket(String fileName, File file, String rootPath) {
         s3client.putObject(new PutObjectRequest(bucketName, rootPath + fileName, file)
@@ -81,8 +80,7 @@ public class AwsS3Utils {
         S3Object object = s3client.getObject(new GetObjectRequest(bucketName, fileUrl));
         InputStream objectData = object.getObjectContent();
         try {
-            byte[] data = objectData.readAllBytes();
-            return data;
+            return objectData.readAllBytes();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

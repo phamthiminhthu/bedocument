@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/v1/management/group/{groupId}")
+@RequestMapping("api/v1/management/group")
 public class GroupShareUserController {
     private final GroupShareUserService groupShareUserService;
 
@@ -20,7 +20,7 @@ public class GroupShareUserController {
     }
 
     // todo: waiting ~~ invite member, return list members accepted, send mail ~~ resend invitation
-    @PostMapping("invite")
+    @PostMapping("{groupId}/invite")
     public ResponseEntity<CustomResponse> inviteMember(@PathVariable(value="groupId") Long groupId, @RequestBody List<String> emailUsers){
         boolean status = groupShareUserService.inviteMemberGroup(groupId, emailUsers);
         if (status){
@@ -29,7 +29,7 @@ public class GroupShareUserController {
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Invite Member Failed");
     }
 
-    @PostMapping("invite/resend")
+    @PostMapping("{groupId}/invite/resend")
     public ResponseEntity<CustomResponse> inviteResendMember(@PathVariable(value="groupId") Long groupId, @ModelAttribute(value="email") String emailUser){
         boolean status = groupShareUserService.inviteResendMemberGroup(groupId, emailUser);
         if (status){
@@ -40,7 +40,7 @@ public class GroupShareUserController {
 
 
     // todo: accept invite join group
-    @PostMapping("accept/invite")
+    @PostMapping("{groupId}/accept/invite")
     public ResponseEntity<CustomResponse> acceptInviteMember(@PathVariable(value="groupId") Long groupId){
         boolean status = groupShareUserService.acceptInviteMember(groupId);
         if (status){
@@ -49,7 +49,7 @@ public class GroupShareUserController {
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Accept invite Failed");
     }
 
-    @PostMapping("invite/cancel")
+    @PostMapping("{groupId}/invite/cancel")
     public ResponseEntity<CustomResponse> cancelInviteMember(@PathVariable(value="groupId") Long groupId, @ModelAttribute(value="email") String emailUser){
         boolean status = groupShareUserService.cancelInviteMember(groupId, emailUser);
         if (status){
@@ -57,7 +57,17 @@ public class GroupShareUserController {
         }
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Cancel invite Failed");
     }
-    @GetMapping("permission")
+
+    @PostMapping("{groupId}/invite/decline")
+    public ResponseEntity<CustomResponse> cancelInviteMember(@PathVariable(value="groupId") Long groupId){
+        boolean status = groupShareUserService.declineInviteMember(groupId);
+        if (status){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Decline invite successfully");
+        }
+        return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Decline invite Failed");
+    }
+
+    @GetMapping("{groupId}/permission")
     public ResponseEntity<CustomResponse> getPermissionGroup(@PathVariable(value="groupId") Long groupId){
         int status = groupShareUserService.getPermissionGroup(groupId);
         if(status == 2){
@@ -69,7 +79,7 @@ public class GroupShareUserController {
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Can not access group", status);
     }
 
-    @GetMapping("pending")
+    @GetMapping("{groupId}/pending")
     public ResponseEntity<CustomResponse> getPendingInvites(@PathVariable(value="groupId") Long groupId){
         List<TokenInviteGroupDto> users = groupShareUserService.getPendingInvites(groupId);
         if(users == null){
@@ -81,10 +91,22 @@ public class GroupShareUserController {
         return CustomResponse.generateResponse(HttpStatus.OK, "No pending invites", users);
     }
 
+    @GetMapping("invitations/pending")
+    public ResponseEntity<CustomResponse> getAllPendingInvitations(){
+        List<TokenInviteGroupDto> invitations = groupShareUserService.getAllPendingInvitations();
+        if(invitations == null){
+            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Can not access group");
+        }
+        if(invitations.size() > 0){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Pending invites", invitations);
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "No pending invites", invitations);
+    }
+
 
 
     // todo: check ~~ show all members in group
-    @GetMapping("members/show")
+    @GetMapping("{groupId}/members/show")
     public ResponseEntity<CustomResponse> getMembersGroup(@PathVariable(value="groupId") Long groupId){
         List<MemberGroupDto> userDtosList = groupShareUserService.getMembersGroup(groupId);
         if(userDtosList != null && !userDtosList.isEmpty()){
@@ -94,7 +116,7 @@ public class GroupShareUserController {
     }
 
     // todo: check ~~ delete member if u are owner
-    @PostMapping("member/delete")
+    @PostMapping("{groupId}/member/delete")
     public ResponseEntity<CustomResponse> deleteMemberGroup(@PathVariable(value="groupId") Long groupId, @ModelAttribute(value="username") String username){
         boolean status = groupShareUserService.deleteMembersGroup(groupId, username);
         if(status){
@@ -104,7 +126,7 @@ public class GroupShareUserController {
     }
 
     // todo: check ~~ change position for member -> owner if u are owner
-    @PostMapping("member/position/change")
+    @PostMapping("{groupId}/member/position/change")
     public ResponseEntity<CustomResponse> changePositionMemberGroup(@PathVariable(value="groupId") Long groupId, @RequestParam(value="username") String username){
         boolean status = groupShareUserService.changePositionMemberGroup(groupId, username);
         if(status){
@@ -114,7 +136,7 @@ public class GroupShareUserController {
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Can not change position");
     }
 
-    @PostMapping("leave")
+    @PostMapping("{groupId}/leave")
     public ResponseEntity<CustomResponse> leaveGroup(@PathVariable(value="groupId") Long groupId, @ModelAttribute(value="email") String emailUser){
         boolean status = groupShareUserService.leaveGroup(groupId, emailUser);
         if (status){

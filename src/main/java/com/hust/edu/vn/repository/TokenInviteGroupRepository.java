@@ -12,4 +12,6 @@ public interface TokenInviteGroupRepository extends JpaRepository<TokenInviteGro
     List<TokenInviteGroup> findByGroup(GroupDoc groupDoc);
 
     boolean existsByEmailAndGroupId(String emailUser, Long groupId);
+
+    List<TokenInviteGroup> findAllByEmail(String email);
 }

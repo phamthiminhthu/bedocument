@@ -789,7 +789,6 @@ public class DocumentServiceImpl implements DocumentService {
     }
     private DocumentModel searchDataDocsBySerApi(MultipartFile multipartFile){
         HashMap<String, String> resultMap = extractDataFileUtils.extractData(multipartFile);
-        log.info("resultMap: " + resultMap);
         if(resultMap != null && resultMap.get("title") != null) {
             String query = resultMap.get("title").replaceAll("\\s+", " ").trim();
             if (query.length() > 5) {

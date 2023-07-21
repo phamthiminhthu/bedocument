@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/user")
 @Slf4j
@@ -41,12 +43,25 @@ public class UserController {
 
     @GetMapping("find/username")
     public ResponseEntity<CustomResponse> findByUsername(@RequestParam(value="username") String username){
-        UserDto userDto = userService.findByUsername(username);
-        if(userDto == null){
-            return CustomResponse.generateResponse(HttpStatus.OK, "Not Found");
+        List<UserDto> userDtos = userService.findUsersByUsernameOrFullName(username);
+        if(userDtos == null){
+            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Please login");
         }
-        return CustomResponse.generateResponse(HttpStatus.OK, "Found", userDto);
+        if(userDtos.size() > 0) {
+            return CustomResponse.generateResponse(HttpStatus.OK, "Found", userDtos);
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "Empty", userDtos);
     }
+
+    @GetMapping("find/by-email")
+    public ResponseEntity<CustomResponse> findUserByEmail(@RequestParam(value="email") String email){
+        UserDto userDto = userService.findByUserByEmail(email);
+        if(userDto != null) {
+            return CustomResponse.generateResponse(HttpStatus.OK, "Found", userDto);
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "Not Found", null);
+    }
+
 
     @GetMapping("information/by-token")
     public ResponseEntity<CustomResponse> getInfo(){
@@ -61,6 +76,5 @@ public class UserController {
         boolean status = userService.changePassword(changePasswordModel);
         return CustomResponse.generateResponse(status);
     }
-
 
 }

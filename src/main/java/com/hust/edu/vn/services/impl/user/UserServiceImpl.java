@@ -4,6 +4,7 @@ import com.hust.edu.vn.dto.UserDto;
 import com.hust.edu.vn.entity.User;
 import com.hust.edu.vn.model.ChangePasswordModel;
 import com.hust.edu.vn.model.UserModel;
+import com.hust.edu.vn.repository.FollowRepository;
 import com.hust.edu.vn.repository.UserRepository;
 import com.hust.edu.vn.services.user.UserService;
 import com.hust.edu.vn.utils.AwsS3Utils;
@@ -15,11 +16,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Service
 @Slf4j
 public class UserServiceImpl implements UserService {
+    private final FollowRepository followRepository;
     private final UserRepository userRepository;
     private final ModelMapperUtils modelMapperUtils;
     private final AwsS3Utils awsS3Utils;
@@ -27,12 +31,14 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, ModelMapperUtils modelMapperUtils, AwsS3Utils awsS3Utils, BaseUtils baseUtils, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, ModelMapperUtils modelMapperUtils, AwsS3Utils awsS3Utils, BaseUtils baseUtils, PasswordEncoder passwordEncoder,
+                           FollowRepository followRepository) {
         this.userRepository = userRepository;
         this.modelMapperUtils = modelMapperUtils;
         this.awsS3Utils = awsS3Utils;
         this.baseUtils = baseUtils;
         this.passwordEncoder = passwordEncoder;
+        this.followRepository = followRepository;
     }
 
     @Override
@@ -74,10 +80,43 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto findByUsername(String username) {
-        User user = userRepository.findByUsername(username);
+    public List<UserDto> findUsersByUsernameOrFullName(String username) {
+       User user = baseUtils.getUser();
+        if (user != null) {
+            List<User> users = userRepository.findByFullnameOrUsernameContainingIgnoreCase(username);
+            List<UserDto> result = new ArrayList<>();
+            if (users != null && users.size() > 0){
+                for(User user1 : users){
+                    UserDto userDto = modelMapperUtils.mapAllProperties(user1, UserDto.class);
+                    if(user.getUsername().equals(user1.getUsername())){
+                        userDto.setFollower((byte) 2);
+                    }
+                    if(followRepository.existsByFollowingIdAndFollower(user1.getId(), user)){
+                        userDto.setFollower((byte) 1);
+                    }
+                    result.add(userDto);
+                }
+            }
+            return result;
+        }
+        return null;
+    }
+
+    @Override
+    public UserDto findByUserByEmail(String email) {
+        User user = baseUtils.getUser();
         if (user != null){
-            return modelMapperUtils.mapAllProperties(user, UserDto.class);
+            User user1 = userRepository.findByEmail(email);
+            if(user1 != null){
+                UserDto userDto = modelMapperUtils.mapAllProperties(user, UserDto.class);
+                if(user.getUsername().equals(user1.getUsername())){
+                    userDto.setFollower((byte) 2);
+                }
+                if(followRepository.existsByFollowingIdAndFollower(userDto.getId(), user)){
+                    userDto.setFollower((byte) 1);
+                }
+                return userDto;
+            }
         }
         return null;
     }

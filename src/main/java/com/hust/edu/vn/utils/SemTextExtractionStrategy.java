@@ -28,7 +28,6 @@ public class SemTextExtractionStrategy implements ITextExtractionStrategy {
             TextRenderInfo renderInfo = (TextRenderInfo) iEventData;
             String fontName = renderInfo.getFont().getFontProgram().getFontNames().getFontName();
             String text = renderInfo.getText();
-//            log.info("Text" + text + " fontName: " + fontName);
             if((!fontName.contains("Symbol")) && (!fontName.contains("Wingdings")) && (!fontName.contains("New"))){
                 String regex = "(?i).*bold.*";
                 Pattern pattern = Pattern.compile(regex);
