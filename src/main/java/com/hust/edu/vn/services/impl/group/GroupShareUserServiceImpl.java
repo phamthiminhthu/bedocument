@@ -68,7 +68,7 @@ public class GroupShareUserServiceImpl implements GroupShareUserService {
                             tokenInviteGroupRepository.save(tokenInviteGroup);
                         }
                         String link = hostname + "/groups/" + groupDoc.getId();
-                        sendEmailShareGroup(emailUser, link);
+                        sendEmailShareGroup(emailUser, link, user, groupDoc);
                     }
                     return true;
                 }
@@ -163,7 +163,7 @@ public class GroupShareUserServiceImpl implements GroupShareUserService {
                 if(tokenInviteGroup != null){
                     tokenInviteGroup.setUpdatedAt(new Date());
                     String link = hostname + "/groups/" + groupDoc.getId();
-                    sendEmailShareGroup(emailUser, link);
+                    sendEmailShareGroup(emailUser, link, user, groupDoc);
                     return true;
                 }
             }
@@ -289,8 +289,9 @@ public class GroupShareUserServiceImpl implements GroupShareUserService {
         return false;
     }
 
-    private void sendEmailShareGroup(String email, String applicationUrl){
-        String url= "<b>Link accept</b><a href='" + applicationUrl + "'>Accept</a>";
-        emailService.sendSimpleMessage(email, "Invite group: ", url);
+    private void sendEmailShareGroup(String email, String applicationUrl, User user, GroupDoc groupDoc){
+        String message= "<h1>Hi,</h1><h2>" + user.getUsername() +  " has invited you to join group <strong>" + groupDoc.getGroupName() +
+                "</strong></h2><h3><a href='" + applicationUrl + "'><button>Accept Invite</a></h3>";
+        emailService.sendSimpleMessage(email, "Docskanry: Group invitation request", message);
     }
 }

@@ -151,17 +151,17 @@ public class CollectionServiceImpl implements CollectionService {
         return false;
     }
 
-//    @Override
-//    public CollectionDto showCollectionById(Long id) {
-//        User user = baseUtils.getUser();
-//        if(user != null){
-//            Collection collection = collectionRepository.findByIdAndUser(id, user);
-//            if(collection != null){
-//                return modelMapperUtils.mapAllProperties(collection, CollectionDto.class);
-//            }
-//        }
-//        return null;
-//    }
+    @Override
+    public CollectionDto showCollectionById(Long id) {
+        User user = baseUtils.getUser();
+        if(user != null){
+            Collection collection = collectionRepository.findByIdAndUser(id, user);
+            if(collection != null){
+                return modelMapperUtils.mapAllProperties(collection, CollectionDto.class);
+            }
+        }
+        return null;
+    }
 
     @Override
     public List<CollectionDto> showAllNameCollectionWithoutGroupDoc() {

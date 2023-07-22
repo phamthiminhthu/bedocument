@@ -3,6 +3,7 @@ package com.hust.edu.vn.repository;
 import com.hust.edu.vn.entity.Document;
 import com.hust.edu.vn.entity.Tag;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -23,4 +24,11 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
 
     List<Tag> findByTagNameContainingIgnoreCase(String tagName);
 
+    @Query(""" 
+            SELECT DISTINCT LOWER(t.tagName) FROM Tag t
+            JOIN Document d
+            ON t.document = d
+            WHERE d.user.id IN :usersId
+        """)
+    List<String> findAllByUsersId(List<Long> usersId);
 }

@@ -22,7 +22,6 @@ public interface DocumentService {
   DocumentDto getDocumentModel(String documentKey);
   boolean updateInformationListDocument(List<DocumentModel> listDataDocumentRequest);
   List<DocumentDto> getTrashListDocument();
-  boolean moveDocument(List<String> listDocumentKey, List<Long> listCollectionId, String type);
   List<DocumentDto> getListDocumentLoved();
   boolean updateLovedDocument(String documentKey);
   boolean updatePublicDocument(String documentKey);
@@ -33,11 +32,7 @@ public interface DocumentService {
 
   List<DocumentDto> getListDocumentCompleted();
 
-  List<DocumentDto> getListDocumentPublicSuggestByTag();
-
   List<DocumentDto> getListDocumentPublicFollowing();
-
-  List<DocumentDto> getListDocumentPublicSuggestByTypeDocs();
 
   List<UserDto> getListSuggestUsers();
 

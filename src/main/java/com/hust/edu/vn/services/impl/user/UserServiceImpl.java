@@ -108,7 +108,7 @@ public class UserServiceImpl implements UserService {
         if (user != null){
             User user1 = userRepository.findByEmail(email);
             if(user1 != null){
-                UserDto userDto = modelMapperUtils.mapAllProperties(user, UserDto.class);
+                UserDto userDto = modelMapperUtils.mapAllProperties(user1, UserDto.class);
                 if(user.getUsername().equals(user1.getUsername())){
                     userDto.setFollower((byte) 2);
                 }

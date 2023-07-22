@@ -10,10 +10,10 @@ import com.hust.edu.vn.repository.GroupHasDocumentRepository;
 import com.hust.edu.vn.repository.UserRepository;
 import com.hust.edu.vn.services.document.DocumentShareUserService;
 import com.hust.edu.vn.services.user.EmailService;
-import com.hust.edu.vn.utils.AwsS3Utils;
 import com.hust.edu.vn.utils.BaseUtils;
 import com.hust.edu.vn.utils.ModelMapperUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -27,18 +27,19 @@ public class DocumentShareUserServiceImpl implements DocumentShareUserService {
     private final DocumentRepository documentRepository;
     private final BaseUtils baseUtils;
     private final DocumentShareUserRepository documentShareUserRepository;
-    private final AwsS3Utils awsS3Utils;
     private final EmailService emailService;
     private final ModelMapperUtils modelMapperUtils;
 
+    @Value("${URL_FE}")
+    private String hostname;
+
     public DocumentShareUserServiceImpl(DocumentRepository documentRepository, BaseUtils baseUtils, DocumentShareUserRepository documentShareUserRepository,
-                                        UserRepository userRepository, AwsS3Utils awsS3Utils, EmailService emailService, ModelMapperUtils modelMapperUtils,
+                                        UserRepository userRepository, EmailService emailService, ModelMapperUtils modelMapperUtils,
                                         GroupHasDocumentRepository groupHasDocumentRepository) {
         this.documentRepository = documentRepository;
         this.baseUtils = baseUtils;
         this.documentShareUserRepository = documentShareUserRepository;
         this.userRepository = userRepository;
-        this.awsS3Utils = awsS3Utils;
         this.emailService = emailService;
         this.modelMapperUtils = modelMapperUtils;
         this.groupHasDocumentRepository = groupHasDocumentRepository;
@@ -47,7 +48,7 @@ public class DocumentShareUserServiceImpl implements DocumentShareUserService {
 
     // neu dc share roi thi khong can luu vao db nua
     @Override
-    public boolean shareDocument(String documentKey, List<String> emailUsers, String link) {
+    public boolean shareDocument(String documentKey, List<String> emailUsers) {
         User user = baseUtils.getUser();
         if(user != null){
             Document document = documentRepository.findByDocumentKeyAndStatusDelete(documentKey, (byte) 0);
@@ -62,7 +63,8 @@ public class DocumentShareUserServiceImpl implements DocumentShareUserService {
                                 documentShareUser.setUser(guest);
                                 documentShareUserRepository.save(documentShareUser);
                             }
-                            sendEmailShareDocument(guest.getEmail(), link, documentKey);
+                            String link = hostname + "/document/" + documentKey;
+                            sendEmailShareDocument(guest.getEmail(), link, user);
                         }
                     }
                     return true;
@@ -112,9 +114,10 @@ public class DocumentShareUserServiceImpl implements DocumentShareUserService {
         return null;
     }
 
-    private void sendEmailShareDocument(String email, String applicationUrl, String documentKey){
-        String url = applicationUrl + "/api/v1/management/document/share/read/" + documentKey;
-        emailService.sendSimpleMessage(email, "Share document to you: ", url);
+    private void sendEmailShareDocument(String email, String applicationUrl, User user){
+        String message= "<h1>Hi,</h1><h2>" + user.getUsername() +  " has shared the document for you! Please access the link to view document. </h2> <h3><a href='"
+                + applicationUrl + "'>" + applicationUrl + "</a></h3>";
+        emailService.sendSimpleMessage(email, "Docskanry: Document Sharing", message);
     }
 
 }

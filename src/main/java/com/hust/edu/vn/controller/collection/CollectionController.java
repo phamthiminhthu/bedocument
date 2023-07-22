@@ -59,14 +59,14 @@ public class CollectionController {
         return CustomResponse.generateResponse(HttpStatus.OK, "Collection existed", collectionDto);
     }
 
-//    @GetMapping("show/{id}")
-//    public ResponseEntity<CustomResponse> showCollectionById(@PathVariable(value = "id") Long id){
-//        CollectionDto collectionDto = collectionService.showCollectionById(id);
-//        if( collectionDto == null){
-//            return CustomResponse.generateResponse(HttpStatus.OK, "Collection not existed");
-//        }
-//        return CustomResponse.generateResponse(HttpStatus.OK, "Collection existed", collectionDto);
-//    }
+    @GetMapping("show/{id}")
+    public ResponseEntity<CustomResponse> showCollectionById(@PathVariable(value = "id") Long id){
+        CollectionDto collectionDto = collectionService.showCollectionById(id);
+        if( collectionDto == null){
+            return CustomResponse.generateResponse(HttpStatus.OK, "Collection not existed");
+        }
+        return CustomResponse.generateResponse(HttpStatus.OK, "Collection existed", collectionDto);
+    }
 
     @GetMapping("parent/show/all")
     public ResponseEntity<CustomResponse> showAllCollectionParent(){

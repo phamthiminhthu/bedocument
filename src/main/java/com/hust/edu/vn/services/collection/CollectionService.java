@@ -21,7 +21,9 @@ public interface CollectionService {
 
     boolean renameCollection(Long id, String name);
 
-//    CollectionDto showCollectionById(Long id);
+    CollectionDto showCollectionById(Long id);
 
     List<CollectionDto> showAllNameCollectionWithoutGroupDoc();
+
+
 }

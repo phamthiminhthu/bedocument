@@ -94,12 +94,17 @@ public class ExtractDataFileUtils {
 
                 String resultSearch = title.toString().replaceAll("\\s+", " ");
                 String secondTitleFound = regexResult(resultSearch.replaceAll("(?i).*\\b(?:paper|whitepaper):\\s*", ""));
-                if(secondTitleFound.length() > 0){
+                if(secondTitleFound.length() > 0 && titleAvailable != null){
                     resultAll.put("title", secondTitleFound);
+                    resultAll.put("title2", titleAvailable);
                     return resultAll;
                 }
                 if(titleAvailable != null){
                     resultAll.put("title", titleAvailable);
+                    return resultAll;
+                }
+                if(secondTitleFound.length() > 0){
+                    resultAll.put("title", secondTitleFound);
                     return resultAll;
                 }
                 return null;

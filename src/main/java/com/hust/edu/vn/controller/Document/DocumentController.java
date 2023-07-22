@@ -156,30 +156,6 @@ public class DocumentController {
        return CustomResponse.generateResponse(HttpStatus.OK, "List all document", documents);
    }
 
-   @GetMapping("suggest/by-tags/show/all")
-   public ResponseEntity<CustomResponse> getListDocumentPublicSuggestByTag(){
-        List<DocumentDto> documents = documentService.getListDocumentPublicSuggestByTag();
-        if(documents == null){
-            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
-        }
-        if (documents.size() == 0){
-            return CustomResponse.generateResponse(HttpStatus.OK, "Don't have documents. Please add more documents", documents);
-        }
-        return CustomResponse.generateResponse(HttpStatus.OK, "List all document", documents);
-   }
-
-   @GetMapping("suggest/by-typeDocs/show/all")
-   public ResponseEntity<CustomResponse> getListDocumentPublicSuggestByType(){
-       List<DocumentDto> documents = documentService.getListDocumentPublicSuggestByTypeDocs();
-       if(documents == null){
-           return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
-       }
-       if (documents.size() == 0){
-           return CustomResponse.generateResponse(HttpStatus.OK, "Don't have documents. Please add more documents", documents);
-       }
-       return CustomResponse.generateResponse(HttpStatus.OK, "List all document", documents);
-   }
-
    @GetMapping("suggest/show/all")
    public ResponseEntity<CustomResponse> getListDocumentPublicSuggest(){
         List<DocumentDto> documents = documentService.getListDocumentPublicSuggest();
@@ -219,23 +195,6 @@ public class DocumentController {
             return CustomResponse.generateResponse(HttpStatus.OK, "Delete Document successfully");
         }
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Delete Document failed");
-    }
-
-    record DocumentCollection(List<String> listDocumentKey, List<Long> listTypeId){
-        public List<String> getListDocumentKey(){
-            return listDocumentKey;
-        }
-        public List<Long> getListTypeId() { return listTypeId; }
-    }
-
-    //checking ~~ move document to collection/group
-    @PostMapping("move")
-    public ResponseEntity<CustomResponse> moveDocument(@RequestParam(value="type") String type, @RequestBody DocumentCollection documentCollection){
-        boolean status = documentService.moveDocument(documentCollection.getListDocumentKey(), documentCollection.getListTypeId(), type);
-        if(status){
-            return CustomResponse.generateResponse(HttpStatus.OK, "Move Document successfully");
-        }
-        return CustomResponse.generateResponse(HttpStatus.NOT_FOUND, "Move Document failed");
     }
 
     @GetMapping("loved")

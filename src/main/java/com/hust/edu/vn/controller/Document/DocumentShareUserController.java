@@ -27,7 +27,7 @@ public class DocumentShareUserController {
     // doing check ~~ share document for list username
     @PostMapping("/")
     public ResponseEntity<CustomResponse> shareDocument(@RequestParam(value = "documentKey") String documentKey, @RequestBody List<String> emailUsers, HttpServletRequest httpServletRequest) {
-        boolean status = documentShareUserService.shareDocument(documentKey, emailUsers, applicationUrl(httpServletRequest));
+        boolean status = documentShareUserService.shareDocument(documentKey, emailUsers);
         if(status){
             return CustomResponse.generateResponse(HttpStatus.OK, "Share document successfully");
         }
@@ -68,11 +68,11 @@ public class DocumentShareUserController {
 //        }
 //        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
 //    }
-    private String applicationUrl(HttpServletRequest servletRequest ) {
-        return "https://"
-                + servletRequest.getServerName()
-                + ":"
-                + servletRequest.getServerPort()
-                + servletRequest.getContextPath();
-    }
+//    private String applicationUrl(HttpServletRequest servletRequest ) {
+//        return "https://"
+//                + servletRequest.getServerName()
+//                + ":"
+//                + servletRequest.getServerPort()
+//                + servletRequest.getContextPath();
+//    }
 }
