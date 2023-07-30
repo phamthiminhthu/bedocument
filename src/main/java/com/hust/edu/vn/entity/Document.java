@@ -47,6 +47,9 @@ public class Document {
     @Column(name = "publishing_year")
     private Integer publishingYear;
 
+    @Column(name = "docs_hashcode")
+    private String docsHashcode;
+
     @Lob
     @Column(name = "summary")
     private String summary;

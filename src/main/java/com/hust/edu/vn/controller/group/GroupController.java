@@ -29,29 +29,29 @@ public class GroupController {
         }
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Create group Failed");
     }
-    @GetMapping("owner/show/all")
-    public ResponseEntity<CustomResponse> showAllGroupOwner(){
-        List<GroupDocDto> groupDocDtoList = groupDocService.showAllGroupByOwner();
-        if(groupDocDtoList == null){
-            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
-        }
-        if(groupDocDtoList.size() > 0){
-            return CustomResponse.generateResponse(HttpStatus.OK, "Show all groups successfully", groupDocDtoList);
-        }
-        return CustomResponse.generateResponse(HttpStatus.OK, "Empty", groupDocDtoList);
-    }
+//    @GetMapping("owner/show/all")
+//    public ResponseEntity<CustomResponse> showAllGroupOwner(){
+//        List<GroupDocDto> groupDocDtoList = groupDocService.showAllGroupByOwner();
+//        if(groupDocDtoList == null){
+//            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
+//        }
+//        if(groupDocDtoList.size() > 0){
+//            return CustomResponse.generateResponse(HttpStatus.OK, "Show all groups successfully", groupDocDtoList);
+//        }
+//        return CustomResponse.generateResponse(HttpStatus.OK, "Empty", groupDocDtoList);
+//    }
 
-    @GetMapping("member/show/all")
-    public ResponseEntity<CustomResponse> showAllGroupMember(){
-        List<GroupDocDto> groupDocDtoList = groupDocService.showAllGroupMember();
-        if(groupDocDtoList == null){
-            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
-        }
-        if(groupDocDtoList.size() > 0){
-            return CustomResponse.generateResponse(HttpStatus.OK, "Show all groups successfully", groupDocDtoList);
-        }
-        return CustomResponse.generateResponse(HttpStatus.OK, "Empty", groupDocDtoList);
-    }
+//    @GetMapping("member/show/all")
+//    public ResponseEntity<CustomResponse> showAllGroupMember(){
+//        List<GroupDocDto> groupDocDtoList = groupDocService.showAllGroupMember();
+//        if(groupDocDtoList == null){
+//            return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Access denied");
+//        }
+//        if(groupDocDtoList.size() > 0){
+//            return CustomResponse.generateResponse(HttpStatus.OK, "Show all groups successfully", groupDocDtoList);
+//        }
+//        return CustomResponse.generateResponse(HttpStatus.OK, "Empty", groupDocDtoList);
+//    }
     @GetMapping("show/details/{groupId}")
     public ResponseEntity<CustomResponse> showGroupByGroupId(@PathVariable(value="groupId") Long groupId){
         GroupDocDto groupDocDto = groupDocService.showGroupByGroupId(groupId);

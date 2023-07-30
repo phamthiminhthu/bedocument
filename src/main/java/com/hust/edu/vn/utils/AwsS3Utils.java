@@ -40,6 +40,7 @@ public class AwsS3Utils {
         return new Date().getTime() + "-" + Objects.requireNonNull(multiPart.getOriginalFilename()).replace(" ", "_");
     }
     private void uploadAvatarTos3bucket(String fileName, File file, String rootPath) {
+        log.info("upload");
         s3client.putObject(new PutObjectRequest(bucketName, rootPath + fileName, file)
                 .withCannedAcl(CannedAccessControlList.PublicRead));
     }

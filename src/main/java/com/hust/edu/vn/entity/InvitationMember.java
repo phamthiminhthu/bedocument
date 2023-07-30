@@ -1,7 +1,6 @@
 package com.hust.edu.vn.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,11 +13,11 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "token_invite_group")
-public class TokenInviteGroup {
+@Table(name = "invitation_member")
+public class InvitationMember {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "token_invite_group_id", nullable = false)
+    @Column(name = "invitation_member_id", nullable = false)
     private Long id;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
 

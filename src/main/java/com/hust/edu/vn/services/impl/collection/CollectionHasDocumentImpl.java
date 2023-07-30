@@ -48,13 +48,13 @@ public class CollectionHasDocumentImpl implements CollectionHasDocumentService {
     public boolean createDocumentCollection(Long collectionId, MultipartFile file) {
         User user = baseUtils.getUser();
         if(user != null){
-            Document document = documentService.uploadDocument(file);
-            if(document != null){
+            DocumentDto documentDto = documentService.uploadDocument(file);
+            if(documentDto != null){
                 CollectionHasDocument collectionHasDocument = new CollectionHasDocument();
                 Collection collection = collectionRepository.findByIdAndUserId(collectionId, user.getId());
                 if(collection != null){
                     collectionHasDocument.setCollection(collection);
-                    collectionHasDocument.setDocument(document);
+                    collectionHasDocument.setDocument(modelMapperUtils.mapAllProperties(documentDto, Document.class));
                     collectionHasDocumentRepository.save(collectionHasDocument);
                     return true;
                 }

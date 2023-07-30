@@ -14,13 +14,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
 @Slf4j
 public class GroupDocServiceImpl implements GroupDocService {
-    private final TokenInviteGroupRepository tokenInviteGroupRepository;
-
     private final GroupDocRepository groupDocRepository;
     private final ModelMapperUtils modelMapperUtils;
     private final GroupShareUserRepository groupShareUserRepository;
@@ -29,8 +28,7 @@ public class GroupDocServiceImpl implements GroupDocService {
     private final BaseUtils baseUtils;
     private final DocumentService documentService;
 
-    public GroupDocServiceImpl(GroupDocRepository groupDocRepository, ModelMapperUtils modelMapperUtils, GroupShareUserRepository groupShareUserRepository, GroupHasDocumentRepository groupHasDocumentRepository, CollectionRepository collectionRepository, BaseUtils baseUtils, DocumentService documentService,
-                               TokenInviteGroupRepository tokenInviteGroupRepository) {
+    public GroupDocServiceImpl(GroupDocRepository groupDocRepository, ModelMapperUtils modelMapperUtils, GroupShareUserRepository groupShareUserRepository, GroupHasDocumentRepository groupHasDocumentRepository, CollectionRepository collectionRepository, BaseUtils baseUtils, DocumentService documentService) {
         this.groupDocRepository = groupDocRepository;
         this.modelMapperUtils = modelMapperUtils;
         this.groupShareUserRepository = groupShareUserRepository;
@@ -38,7 +36,6 @@ public class GroupDocServiceImpl implements GroupDocService {
         this.collectionRepository = collectionRepository;
         this.baseUtils = baseUtils;
         this.documentService = documentService;
-        this.tokenInviteGroupRepository = tokenInviteGroupRepository;
     }
 
     @Override
@@ -52,24 +49,6 @@ public class GroupDocServiceImpl implements GroupDocService {
             return true;
         }
         return false;
-    }
-
-    @Override
-    public List<GroupDocDto> showAllGroupByOwner() {
-        User user = baseUtils.getUser();
-        if (user != null) {
-            List<GroupDoc> groupDocsList = groupDocRepository.findAllByUser(user);
-            List<GroupDocDto> groupDocDtoList = new ArrayList<>();
-            if (groupDocsList != null && !groupDocsList.isEmpty()) {
-                for (GroupDoc groupDoc : groupDocsList) {
-                    GroupDocDto groupDocDto = modelMapperUtils.mapAllProperties(groupDoc, GroupDocDto.class);
-                    groupDocDto.setStatusOwner((byte) 1);
-                    groupDocDtoList.add(groupDocDto);
-                }
-            }
-            return groupDocDtoList;
-        }
-        return null;
     }
 
     @Override
@@ -166,29 +145,38 @@ public class GroupDocServiceImpl implements GroupDocService {
         return false;
     }
 
-    @Override
-    public List<GroupDocDto> showAllGroupMember() {
-        User user = baseUtils.getUser();
-        if (user != null) {
-            List<GroupShareUser> groupShareUsers = groupShareUserRepository.findAllByUser(user);
-            List<GroupDocDto> groupDocs = new ArrayList<>();
-            if (groupShareUsers != null && !groupShareUsers.isEmpty()) {
-                for (GroupShareUser groupShareUser : groupShareUsers) {
-                    groupDocs.add(modelMapperUtils.mapAllProperties(groupShareUser.getGroup(), GroupDocDto.class));
-                }
+    private List<GroupDocDto> showAllGroupByOwner(User user) {
+        List<GroupDoc> groupDocsList = groupDocRepository.findAllByUser(user);
+        List<GroupDocDto> groupDocDtoList = new ArrayList<>();
+        if (groupDocsList != null && !groupDocsList.isEmpty()) {
+            for (GroupDoc groupDoc : groupDocsList) {
+                GroupDocDto groupDocDto = modelMapperUtils.mapAllProperties(groupDoc, GroupDocDto.class);
+                groupDocDto.setStatusOwner((byte) 1);
+                groupDocDtoList.add(groupDocDto);
             }
-            return groupDocs;
         }
-        return null;
+        return groupDocDtoList;
+    }
+
+    private List<GroupDocDto> showAllGroupMember(User user) {
+        List<GroupShareUser> groupShareUsers = groupShareUserRepository.findAllByUser(user);
+        List<GroupDocDto> groupDocs = new ArrayList<>();
+        if (groupShareUsers != null && !groupShareUsers.isEmpty()) {
+            for (GroupShareUser groupShareUser : groupShareUsers) {
+                groupDocs.add(modelMapperUtils.mapAllProperties(groupShareUser.getGroup(), GroupDocDto.class));
+            }
+        }
+        return groupDocs;
     }
 
     @Override
     public List<GroupDocDto> getALLGroups() {
         User user = baseUtils.getUser();
         if (user != null) {
-            List<GroupDocDto> listGroupsByMember = showAllGroupMember();
-            List<GroupDocDto> listGroupsByOwner = showAllGroupByOwner();
+            List<GroupDocDto> listGroupsByMember = showAllGroupMember(user);
+            List<GroupDocDto> listGroupsByOwner = showAllGroupByOwner(user);
             listGroupsByOwner.addAll(listGroupsByMember);
+            listGroupsByOwner.sort(Comparator.comparing(GroupDocDto::getCreatedAt));
             return listGroupsByOwner;
         }
         return null;

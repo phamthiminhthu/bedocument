@@ -1,7 +1,7 @@
 package com.hust.edu.vn.services.group;
 
 import com.hust.edu.vn.dto.MemberGroupDto;
-import com.hust.edu.vn.dto.TokenInviteGroupDto;
+import com.hust.edu.vn.dto.InvitationMemberDto;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ public interface GroupShareUserService {
 
     int getPermissionGroup(Long groupId);
 
-    List<TokenInviteGroupDto> getPendingInvites(Long groupId);
+    List<InvitationMemberDto> getPendingInvites(Long groupId);
 
     boolean inviteResendMemberGroup(Long groupId, String emailUser);
 
@@ -26,7 +26,7 @@ public interface GroupShareUserService {
 
     boolean leaveGroup(Long groupId, String emailUser);
 
-    List<TokenInviteGroupDto> getAllPendingInvitations();
+    List<InvitationMemberDto> getAllPendingInvitations();
 
     boolean declineInviteMember(Long groupId);
 }

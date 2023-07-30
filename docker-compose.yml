@@ -8,6 +8,7 @@ services:
       MYSQL_DATABASE: document
     ports:
       - "3306:3306"
+    command: ["--innodb-force-recovery=0"]
     volumes:
       - ./tmp/db:/var/lib/mysql
       

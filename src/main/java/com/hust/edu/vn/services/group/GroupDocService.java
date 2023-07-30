@@ -13,13 +13,8 @@ public interface GroupDocService {
 
     boolean deleteGroupByGroupId(Long groupId);
 
-    List<GroupDocDto> showAllGroupMember();
-
     List<GroupDocDto> getALLGroups();
-
-    List<GroupDocDto> showAllGroupByOwner();
 
     String showGroupNameById(Long groupId);
 
-//    GroupDocDto showGroupMemberByGroupId(Long groupId);
 }

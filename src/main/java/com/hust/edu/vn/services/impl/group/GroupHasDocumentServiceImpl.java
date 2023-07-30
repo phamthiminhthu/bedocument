@@ -44,8 +44,9 @@ public class GroupHasDocumentServiceImpl implements GroupHasDocumentService {
     public boolean createDocument(Long groupId, Long collectionId, MultipartFile file) {
         User user = baseUtils.getUser();
         if (user != null) {
-            Document document = documentService.uploadDocument(file);
-            if (document != null) {
+            DocumentDto documentDto = documentService.uploadDocument(file);
+            if (documentDto != null) {
+                Document document = modelMapperUtils.mapAllProperties(documentDto, Document.class);
                 if (groupId != null) {
                     GroupDoc groupDoc = baseUtils.getGroupDoc(user, groupId);
                     if (groupDoc != null) {

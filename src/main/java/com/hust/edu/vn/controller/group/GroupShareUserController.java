@@ -2,7 +2,7 @@ package com.hust.edu.vn.controller.group;
 
 import com.hust.edu.vn.common.type.CustomResponse;
 import com.hust.edu.vn.dto.MemberGroupDto;
-import com.hust.edu.vn.dto.TokenInviteGroupDto;
+import com.hust.edu.vn.dto.InvitationMemberDto;
 import com.hust.edu.vn.services.group.GroupShareUserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -81,7 +81,7 @@ public class GroupShareUserController {
 
     @GetMapping("{groupId}/pending")
     public ResponseEntity<CustomResponse> getPendingInvites(@PathVariable(value="groupId") Long groupId){
-        List<TokenInviteGroupDto> users = groupShareUserService.getPendingInvites(groupId);
+        List<InvitationMemberDto> users = groupShareUserService.getPendingInvites(groupId);
         if(users == null){
             return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Can not access group");
         }
@@ -93,7 +93,7 @@ public class GroupShareUserController {
 
     @GetMapping("invitations/pending")
     public ResponseEntity<CustomResponse> getAllPendingInvitations(){
-        List<TokenInviteGroupDto> invitations = groupShareUserService.getAllPendingInvitations();
+        List<InvitationMemberDto> invitations = groupShareUserService.getAllPendingInvitations();
         if(invitations == null){
             return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Can not access group");
         }

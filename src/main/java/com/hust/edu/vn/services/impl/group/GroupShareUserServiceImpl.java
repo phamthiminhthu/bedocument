@@ -1,14 +1,14 @@
 package com.hust.edu.vn.services.impl.group;
 
 import com.hust.edu.vn.dto.MemberGroupDto;
-import com.hust.edu.vn.dto.TokenInviteGroupDto;
+import com.hust.edu.vn.dto.InvitationMemberDto;
 import com.hust.edu.vn.entity.GroupDoc;
 import com.hust.edu.vn.entity.GroupShareUser;
-import com.hust.edu.vn.entity.TokenInviteGroup;
+import com.hust.edu.vn.entity.InvitationMember;
 import com.hust.edu.vn.entity.User;
 import com.hust.edu.vn.repository.GroupDocRepository;
 import com.hust.edu.vn.repository.GroupShareUserRepository;
-import com.hust.edu.vn.repository.TokenInviteGroupRepository;
+import com.hust.edu.vn.repository.InvitationMemberRepository;
 import com.hust.edu.vn.repository.UserRepository;
 import com.hust.edu.vn.services.group.GroupShareUserService;
 import com.hust.edu.vn.services.user.EmailService;
@@ -25,7 +25,7 @@ import java.util.List;
 @Service
 @Slf4j
 public class GroupShareUserServiceImpl implements GroupShareUserService {
-    private final TokenInviteGroupRepository tokenInviteGroupRepository;
+    private final InvitationMemberRepository invitationMemberRepository;
     private final GroupDocRepository groupDocRepository;
     private final UserRepository userRepository;
     private final GroupShareUserRepository groupShareUserRepository;
@@ -40,14 +40,14 @@ public class GroupShareUserServiceImpl implements GroupShareUserService {
     public GroupShareUserServiceImpl(GroupShareUserRepository groupShareUserRepository, BaseUtils baseUtils,
                                      UserRepository userRepository, EmailService emailService,
                                      GroupDocRepository groupDocRepository, ModelMapperUtils modelMapperUtils,
-                                     TokenInviteGroupRepository tokenInviteGroupRepository) {
+                                     InvitationMemberRepository invitationMemberRepository) {
         this.groupShareUserRepository = groupShareUserRepository;
         this.baseUtils = baseUtils;
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.groupDocRepository = groupDocRepository;
         this.modelMapperUtils = modelMapperUtils;
-        this.tokenInviteGroupRepository = tokenInviteGroupRepository;
+        this.invitationMemberRepository = invitationMemberRepository;
     }
     @Override
     public boolean inviteMemberGroup(Long groupId, List<String> emailUsers) {
@@ -61,11 +61,11 @@ public class GroupShareUserServiceImpl implements GroupShareUserService {
                         if(user1 != null && (groupShareUserRepository.existsByGroupIdAndUser(groupId, user1) || groupDoc.getUser() == user1 )){
                             continue;
                         }
-                        if(!tokenInviteGroupRepository.existsByEmailAndGroupId(emailUser, groupId)){
-                            TokenInviteGroup tokenInviteGroup = new TokenInviteGroup();
-                            tokenInviteGroup.setGroup(groupDoc);
-                            tokenInviteGroup.setEmail(emailUser);
-                            tokenInviteGroupRepository.save(tokenInviteGroup);
+                        if(!invitationMemberRepository.existsByEmailAndGroupId(emailUser, groupId)){
+                            InvitationMember invitationMember = new InvitationMember();
+                            invitationMember.setGroup(groupDoc);
+                            invitationMember.setEmail(emailUser);
+                            invitationMemberRepository.save(invitationMember);
                         }
                         String link = hostname + "/groups/" + groupDoc.getId();
                         sendEmailShareGroup(emailUser, link, user, groupDoc);
@@ -81,9 +81,9 @@ public class GroupShareUserServiceImpl implements GroupShareUserService {
     public boolean acceptInviteMember(Long groupId) {
         User user = baseUtils.getUser();
         if(user != null){
-            TokenInviteGroup tokenInviteGroup = tokenInviteGroupRepository.findByEmailAndGroupId(user.getEmail(), groupId);
-            if(tokenInviteGroup != null){
-                tokenInviteGroupRepository.delete(tokenInviteGroup);
+            InvitationMember invitationMember = invitationMemberRepository.findByEmailAndGroupId(user.getEmail(), groupId);
+            if(invitationMember != null){
+                invitationMemberRepository.delete(invitationMember);
                 GroupDoc groupDoc = groupDocRepository.findById(groupId).orElse(null);
                 if(groupDoc != null){
                     GroupShareUser groupShareUser = new GroupShareUser();
@@ -105,8 +105,8 @@ public class GroupShareUserServiceImpl implements GroupShareUserService {
             if(groupDoc != null){
                 return 1;
             }
-            TokenInviteGroup tokenInviteGroup = tokenInviteGroupRepository.findByEmailAndGroupId(user.getEmail(), groupId);
-            if(tokenInviteGroup != null){
+            InvitationMember invitationMember = invitationMemberRepository.findByEmailAndGroupId(user.getEmail(), groupId);
+            if(invitationMember != null){
                 return 2;
             }
         }
@@ -114,16 +114,16 @@ public class GroupShareUserServiceImpl implements GroupShareUserService {
     }
 
     @Override
-    public List<TokenInviteGroupDto> getPendingInvites(Long groupId) {
+    public List<InvitationMemberDto> getPendingInvites(Long groupId) {
         User user = baseUtils.getUser();
         if(user != null){
             GroupDoc groupDoc = baseUtils.getGroupDoc(user, groupId);
             if(groupDoc != null){
-                List<TokenInviteGroup> tokenInviteGroups = tokenInviteGroupRepository.findByGroup(groupDoc);
-                List<TokenInviteGroupDto> pendingInvites = new ArrayList<>();
-                if(tokenInviteGroups != null && !tokenInviteGroups.isEmpty()){
-                    for(TokenInviteGroup tokenInviteGroup : tokenInviteGroups){
-                        pendingInvites.add(modelMapperUtils.mapAllProperties(tokenInviteGroup, TokenInviteGroupDto.class));
+                List<InvitationMember> invitationMembers = invitationMemberRepository.findByGroup(groupDoc);
+                List<InvitationMemberDto> pendingInvites = new ArrayList<>();
+                if(invitationMembers != null && !invitationMembers.isEmpty()){
+                    for(InvitationMember invitationMember : invitationMembers){
+                        pendingInvites.add(modelMapperUtils.mapAllProperties(invitationMember, InvitationMemberDto.class));
                     }
                 }
                 return pendingInvites;
@@ -134,17 +134,17 @@ public class GroupShareUserServiceImpl implements GroupShareUserService {
 
 
     @Override
-    public List<TokenInviteGroupDto> getAllPendingInvitations() {
+    public List<InvitationMemberDto> getAllPendingInvitations() {
         User user = baseUtils.getUser();
         if(user != null){
-            List<TokenInviteGroup> pendingInvites = tokenInviteGroupRepository.findAllByEmail(user.getEmail());
-            List<TokenInviteGroupDto> tokenInviteGroupsDto = new ArrayList<>();
+            List<InvitationMember> pendingInvites = invitationMemberRepository.findAllByEmail(user.getEmail());
+            List<InvitationMemberDto> tokenInviteGroupsDto = new ArrayList<>();
             if(pendingInvites != null && pendingInvites.size() > 0) {
-                for (TokenInviteGroup tokenInviteGroup : pendingInvites){
-                    TokenInviteGroupDto tokenInviteGroupDto = modelMapperUtils.mapAllProperties(tokenInviteGroup, TokenInviteGroupDto.class);
-                    tokenInviteGroupDto.setGroupName(tokenInviteGroup.getGroup().getGroupName());
-                    tokenInviteGroupDto.setGroupId(tokenInviteGroup.getGroup().getId());
-                    tokenInviteGroupsDto.add(tokenInviteGroupDto);
+                for (InvitationMember invitationMember : pendingInvites){
+                    InvitationMemberDto invitationMemberDto = modelMapperUtils.mapAllProperties(invitationMember, InvitationMemberDto.class);
+                    invitationMemberDto.setGroupName(invitationMember.getGroup().getGroupName());
+                    invitationMemberDto.setGroupId(invitationMember.getGroup().getId());
+                    tokenInviteGroupsDto.add(invitationMemberDto);
                 }
             }
             return tokenInviteGroupsDto;
@@ -159,9 +159,9 @@ public class GroupShareUserServiceImpl implements GroupShareUserService {
         if(user != null){
             GroupDoc groupDoc = baseUtils.getGroupDoc(user, groupId);
             if(groupDoc != null){
-                TokenInviteGroup tokenInviteGroup = tokenInviteGroupRepository.findByEmailAndGroupId(emailUser, groupDoc.getId());
-                if(tokenInviteGroup != null){
-                    tokenInviteGroup.setUpdatedAt(new Date());
+                InvitationMember invitationMember = invitationMemberRepository.findByEmailAndGroupId(emailUser, groupDoc.getId());
+                if(invitationMember != null){
+                    invitationMember.setUpdatedAt(new Date());
                     String link = hostname + "/groups/" + groupDoc.getId();
                     sendEmailShareGroup(emailUser, link, user, groupDoc);
                     return true;
@@ -177,9 +177,9 @@ public class GroupShareUserServiceImpl implements GroupShareUserService {
         if(user != null){
             GroupDoc groupDoc = baseUtils.getGroupDoc(user, groupId);
             if(groupDoc != null){
-                TokenInviteGroup tokenInviteGroup = tokenInviteGroupRepository.findByEmailAndGroupId(emailUser, groupId);
-                if(tokenInviteGroup != null){
-                    tokenInviteGroupRepository.delete(tokenInviteGroup);
+                InvitationMember invitationMember = invitationMemberRepository.findByEmailAndGroupId(emailUser, groupId);
+                if(invitationMember != null){
+                    invitationMemberRepository.delete(invitationMember);
                     return true;
                 }
             }
@@ -191,9 +191,9 @@ public class GroupShareUserServiceImpl implements GroupShareUserService {
     public boolean declineInviteMember(Long groupId) {
         User user = baseUtils.getUser();
         if(user != null){
-            TokenInviteGroup tokenInviteGroup = tokenInviteGroupRepository.findByEmailAndGroupId(user.getEmail(), groupId);
-            if(tokenInviteGroup != null){
-                tokenInviteGroupRepository.delete(tokenInviteGroup);
+            InvitationMember invitationMember = invitationMemberRepository.findByEmailAndGroupId(user.getEmail(), groupId);
+            if(invitationMember != null){
+                invitationMemberRepository.delete(invitationMember);
                 return true;
             }
         }

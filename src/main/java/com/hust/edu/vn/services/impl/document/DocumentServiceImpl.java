@@ -12,6 +12,7 @@ import com.hust.edu.vn.utils.AwsS3Utils;
 import com.hust.edu.vn.utils.BaseUtils;
 import com.hust.edu.vn.utils.ExtractDataFileUtils;
 import com.hust.edu.vn.utils.ModelMapperUtils;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.print.Doc;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -34,32 +36,27 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 
 @Service
 @Slf4j
 public class DocumentServiceImpl implements DocumentService {
-    private final LikeDocumentRepository likeDocumentRepository;
+
     private final UserRepository userRepository;
-    private final FollowRepository followRepository;
-    private final DocumentShareUserRepository documentShareUserRepository;
+    private final DocumentRepository documentRepository;
     private final TypeDocumentRepository typeDocumentRepository;
     private final TagRepository tagRepository;
     private final UrlRepository urlRepository;
+    private final LikeDocumentRepository likeDocumentRepository;
+    private final FollowRepository followRepository;
+    private final DocumentShareUserRepository documentShareUserRepository;
     private final GroupHasDocumentRepository groupHasDocumentRepository;
     private final AwsS3Utils awsS3Utils;
     private final ModelMapperUtils modelMapperUtils;
     private final ExtractDataFileUtils extractDataFileUtils;
     private final RestTemplate restTemplate;
-    private final DocumentRepository documentRepository;
     private final BaseUtils baseUtils;
     private final CollectionHasDocumentRepository collectionHasDocumentRepository;
-
-    private final TagService tagService;
-    private final TypeDocumentService typeDocumentService;
-
-//    private final LikeDocumentService likeDocumentService;
 
     @Value("${google.scholar.api.key}")
     private String apiKey;
@@ -71,7 +68,7 @@ public class DocumentServiceImpl implements DocumentService {
                                GroupHasDocumentRepository groupHasDocumentRepository,
                                UrlRepository urlRepository,
                                TagRepository tagRepository,
-                               TypeDocumentRepository typeDocumentRepository, TagService tagService, TypeDocumentService typeDocumentService,
+                               TypeDocumentRepository typeDocumentRepository,
                                DocumentShareUserRepository documentShareUserRepository,
                                FollowRepository followRepository,
                                UserRepository userRepository,
@@ -87,49 +84,80 @@ public class DocumentServiceImpl implements DocumentService {
         this.urlRepository = urlRepository;
         this.tagRepository = tagRepository;
         this.typeDocumentRepository = typeDocumentRepository;
-        this.tagService = tagService;
-        this.typeDocumentService = typeDocumentService;
         this.documentShareUserRepository = documentShareUserRepository;
         this.followRepository = followRepository;
         this.userRepository = userRepository;
         this.likeDocumentRepository = likeDocumentRepository;
     }
+
     @Override
-    public Document uploadDocument(MultipartFile multipartFile) {
-        CompletableFuture<String> documentKeyCompletableFuture = getNameDocument(multipartFile);
-        CompletableFuture<DocumentModel> documentModelCompletableFuture = getResultDocumentModelFromPDF(multipartFile);
-        CompletableFuture.allOf(documentKeyCompletableFuture, documentModelCompletableFuture).join();
-        try {
-            String documentKey = documentKeyCompletableFuture.get();
-            DocumentModel documentModel = documentModelCompletableFuture.get();
-            if(documentModel != null){
-                Document document = modelMapperUtils.mapAllProperties(documentModel, Document.class);
+    public DocumentDto uploadDocument(MultipartFile multipartFile) {
+        User user = baseUtils.getUser();
+        if (user != null) {
+            if (!Objects.equals(multipartFile.getContentType(), "application/pdf")) {
+                return null;
+            }
+            CompletableFuture<String> documentKeyCompletableFuture = getDocumentKeyFromAWS(multipartFile);
+            CompletableFuture<DocumentModel> documentModelCompletableFuture = getResultDocumentModelFromPDF(multipartFile);
+            CompletableFuture<String> compareHashcodeDocuments = hashcodeDocuments(multipartFile);
+            CompletableFuture.allOf(documentKeyCompletableFuture, documentModelCompletableFuture, compareHashcodeDocuments).join();
+            try {
+                String documentKey = documentKeyCompletableFuture.get();
+                DocumentModel documentModel = documentModelCompletableFuture.get();
+                String docsHashCode = compareHashcodeDocuments.get();
+
+                List<Document> documentsExisted = null;
+                List<DocumentDto> documentsDtoExisted = new ArrayList<>();
+                if (docsHashCode != null) {
+                    documentsExisted = documentRepository.findByUserAndStatusDeleteAndDocsHashcode(user, (byte) 0, docsHashCode);
+                }
+                if (documentsExisted != null && documentsExisted.size() > 0) {
+                    for (Document documentExisted : documentsExisted) {
+                        documentsDtoExisted.add(modelMapperUtils.mapAllProperties(documentExisted, DocumentDto.class));
+                    }
+                }
+                if (documentModel != null) {
+                    Document document = modelMapperUtils.mapAllProperties(documentModel, Document.class);
+                    document.setDocumentKey(documentKey);
+                    document.setDocsName(multipartFile.getOriginalFilename());
+                    document.setUser(user);
+                    if (docsHashCode != null) {
+                        document.setDocsHashcode(docsHashCode);
+                    }
+                    documentRepository.save(document);
+                    DocumentDto documentDto = modelMapperUtils.mapAllProperties(document, DocumentDto.class);
+                    if (documentsDtoExisted.size() > 0) {
+                        documentDto.setDocumentsDtoSameHashcode(documentsDtoExisted);
+                    }
+                    return documentDto;
+                }
+                Document document = new Document();
                 document.setDocumentKey(documentKey);
                 document.setDocsName(multipartFile.getOriginalFilename());
-                User user = baseUtils.getUser();
+                if (docsHashCode != null) {
+                    document.setDocsHashcode(docsHashCode);
+                }
                 document.setUser(user);
                 documentRepository.save(document);
-                return document;
-            }
-            Document document = new Document();
-            document.setDocumentKey(documentKey);
-            document.setDocsName(multipartFile.getOriginalFilename());
-            User user = baseUtils.getUser();
-            document.setUser(user);
-            documentRepository.save(document);
-            return document;
+                DocumentDto documentDto = modelMapperUtils.mapAllProperties(document, DocumentDto.class);
+                if (!documentsDtoExisted.isEmpty()) {
+                    documentDto.setDocumentsDtoSameHashcode(documentsDtoExisted);
+                }
+                return documentDto;
 
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            } catch (InterruptedException | ExecutionException e) {
+                return null;
+            }
         }
+        return null;
     }
 
     @Override
     public byte[] loadFileFromS3(String documentKey) {
         User user = baseUtils.getUser();
         Document document = documentRepository.findByDocumentKeyAndStatusDelete(documentKey, (byte) 0);
-        if(document != null){
-            if(document.getUser() == user || document.getDocsPublic() == 1 || documentShareUserRepository.existsByUserAndDocument(user, document)){
+        if (document != null) {
+            if (document.getUser() == user || document.getDocsPublic() == 1 || documentShareUserRepository.existsByUserAndDocument(user, document)) {
                 return awsS3Utils.readFile(document.getUser().getRootPath(), documentKey);
             }
             return null;
@@ -140,7 +168,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public List<DocumentDto> getListDocument() {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             List<Document> documents = documentRepository.findByUserAndStatusDeleteOrderByCreatedAtDesc(user, (byte) 0);
             return baseUtils.getListDocumentsDto(documents);
         }
@@ -150,10 +178,10 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public DocumentDto getDocumentModel(String documentKey) {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             Document document = documentRepository.findByDocumentKeyAndStatusDelete(documentKey, (byte) 0);
-            if(document != null){
-                if(document.getDocsPublic() == 1 || document.getUser() == user || documentShareUserRepository.existsByUserAndDocument(user, document) || groupHasDocumentRepository.existsUserInGroupWithDocument(user, document)) {
+            if (document != null) {
+                if (document.getDocsPublic() == 1 || document.getUser() == user || documentShareUserRepository.existsByUserAndDocument(user, document) || groupHasDocumentRepository.existsUserInGroupWithDocument(user, document)) {
                     return baseUtils.getDocumentDto(document);
                 }
                 return null;
@@ -161,10 +189,11 @@ public class DocumentServiceImpl implements DocumentService {
         }
         return null;
     }
+
     @Override
     public List<DocumentDto> getTrashListDocument() {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             List<Document> listDocumentTrash = documentRepository.findByUserAndStatusDeleteOrderByCreatedAtDesc(user, (byte) 1);
             return baseUtils.getListDocumentsDto(listDocumentTrash);
         }
@@ -174,8 +203,8 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public List<DocumentDto> getListDocumentLoved() {
         User user = baseUtils.getUser();
-        if(user != null){
-            List<Document> documentList = documentRepository.findAllByUserAndLovedOrderByCreatedAtDesc(user, (byte) 1);
+        if (user != null) {
+            List<Document> documentList = documentRepository.findAllByUserAndDocsStatusAndLovedOrderByCreatedAtDesc(user, (byte) 0, (byte) 1);
             return baseUtils.getListDocumentsDto(documentList);
         }
         return null;
@@ -184,7 +213,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public List<DocumentDto> getListDocumentPublic() {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             List<Document> documentList = documentRepository.findAllByUserAndDocsPublicOrderByCreatedAtDesc(user, (byte) 1);
             return baseUtils.getListDocumentsDto(documentList);
         }
@@ -194,17 +223,17 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public List<DocumentDto> getListDocumentPublicByUsername(String username) {
         User user = userRepository.findByUsername(username);
-        if(user != null){
+        if (user != null) {
             List<Document> documentList = documentRepository.findAllByUserAndDocsPublicOrderByCreatedAtDesc(user, (byte) 1);
             User currentUser = baseUtils.getUser();
-            if(currentUser != null && documentList != null && documentList.size() > 0){
+            if (currentUser != null && documentList != null && documentList.size() > 0) {
                 List<DocumentDto> documentDtoList = new ArrayList<>();
-                for (Document document : documentList){
-                    if(likeDocumentRepository.existsByUserAndDocument(currentUser, document)){
+                for (Document document : documentList) {
+                    if (likeDocumentRepository.existsByUserAndDocument(currentUser, document)) {
                         DocumentDto documentDto = baseUtils.getDocumentDto(document);
                         documentDto.setLiked((byte) 1);
                         documentDtoList.add(documentDto);
-                    }else{
+                    } else {
                         DocumentDto documentDto = baseUtils.getDocumentDto(document);
                         documentDtoList.add(documentDto);
                     }
@@ -219,11 +248,11 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public List<DocumentDto> getListDocumentShared() {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             List<DocumentShareUser> documentShareUserList = documentShareUserRepository.findAllByUser(user);
             List<Document> documents = new ArrayList<>();
-            if(documentShareUserList != null  && !documentShareUserList.isEmpty()){
-                for(DocumentShareUser documentShareUser : documentShareUserList){
+            if (documentShareUserList != null && !documentShareUserList.isEmpty()) {
+                for (DocumentShareUser documentShareUser : documentShareUserList) {
                     documents.add(documentShareUser.getDocument());
                 }
             }
@@ -235,7 +264,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public List<DocumentDto> getListDocumentCompleted() {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             List<Document> documentList = documentRepository.findAllByUserAndDocsStatusOrderByCreatedAtDesc(user, (byte) 1);
             return baseUtils.getListDocumentsDto(documentList);
         }
@@ -243,23 +272,23 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public List<DocumentDto>  getListDocumentPublicFollowing() {
+    public List<DocumentDto> getListDocumentPublicFollowing() {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             List<Follow> followingList = followRepository.findAllByFollower(user);
             List<DocumentDto> documentDtoList = new ArrayList<>();
-            if(followingList != null && !followingList.isEmpty()){
+            if (followingList != null && !followingList.isEmpty()) {
                 List<User> followingUsers = new ArrayList<>();
-                for(Follow following : followingList){
-                        followingUsers.add(userRepository.findById(following.getFollowingId()).orElse(null));
+                for (Follow following : followingList) {
+                    followingUsers.add(userRepository.findById(following.getFollowingId()).orElse(null));
                 }
-                for(User following : followingUsers){
+                for (User following : followingUsers) {
                     List<Document> documentList = documentRepository.findAllByUserAndDocsPublicOrderByUpdatedAtDesc(following, (byte) 1);
                     documentDtoList.addAll(baseUtils.getListDocumentsDto(documentList));
                 }
                 documentDtoList.sort((obj1, obj2) -> obj2.getUpdatedAt().compareTo(obj1.getUpdatedAt()));
-                for(DocumentDto document : documentDtoList){
-                    if(likeDocumentRepository.existsByUserAndDocumentId(user, document.getId())){
+                for (DocumentDto document : documentDtoList) {
+                    if (likeDocumentRepository.existsByUserAndDocumentId(user, document.getId())) {
                         document.setLiked(((byte) 1));
                     }
                 }
@@ -268,33 +297,39 @@ public class DocumentServiceImpl implements DocumentService {
         }
         return null;
     }
+
     @Override
     public List<UserDto> getListSuggestUsers() {
-       User user = baseUtils.getUser();
-       if (user != null){
-           Set<UserDto> userDtoList = new HashSet<>();
+        User user = baseUtils.getUser();
+        if (user != null) {
+            List<Long> usersIdFollowing = getListIdUsersFollowing(user);
+            Set<UserDto> userDtoList = new HashSet<>();
             List<Document> documentsSuggest = getDocumentSuggested(user);
-            if(documentsSuggest != null && !documentsSuggest.isEmpty()){
-                for(Document document : documentsSuggest){
-                    userDtoList.add(modelMapperUtils.mapAllProperties(document.getUser(), UserDto.class));
+            if (documentsSuggest != null && !documentsSuggest.isEmpty()) {
+                for (Document document : documentsSuggest) {
+                    for(Long id : usersIdFollowing){
+                        if(!Objects.equals(document.getUser().getId(), id)){
+                            userDtoList.add(modelMapperUtils.mapAllProperties(document.getUser(), UserDto.class));
+                        }
+                    }
                 }
             }
             return new ArrayList<>(userDtoList);
-       }
+        }
         return null;
     }
 
     @Override
     public List<DocumentDto> getListDocumentPublicSuggest() {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             List<Document> documentsSuggest = getDocumentSuggested(user);
-            if(documentsSuggest != null && documentsSuggest.size() == 0){
+            if (documentsSuggest != null && documentsSuggest.size() == 0) {
                 documentsSuggest = getListDocumentHighStars(user);
             }
-            List<DocumentDto> documentSuggestDto =  baseUtils.getListDocumentsDto(documentsSuggest);
-            for(DocumentDto documentDto : documentSuggestDto){
-                if(likeDocumentRepository.existsByUserAndDocumentId(user, documentDto.getId())){
+            List<DocumentDto> documentSuggestDto = baseUtils.getListDocumentsDto(documentsSuggest);
+            for (DocumentDto documentDto : documentSuggestDto) {
+                if (likeDocumentRepository.existsByUserAndDocumentId(user, documentDto.getId())) {
                     documentDto.setLiked((byte) 1);
                 }
             }
@@ -303,23 +338,95 @@ public class DocumentServiceImpl implements DocumentService {
         return null;
     }
 
-    private List<Document> getDocumentSuggested(User user){
-        List<Long> usersId = getListIdUsers(user);
-        List<String> listTagNameFollow = tagRepository.findAllByUsersId(usersId);
-        List<String> listTypeDocumentFollow = typeDocumentRepository.findAllByUsers(usersId);
-        return documentRepository.findAllByTagsAndTypedocumentNotInUsers(listTagNameFollow, listTypeDocumentFollow, usersId);
+    private List<Document> getDocumentSuggested(User user) {
+        List<Long> usersId = getListIdUsersFollowing(user);
+        List<Document> documentsUser = documentRepository.findTop20ByUserAndStatusDeleteOrderByCreatedAtDesc(user, (byte) 0);
+        List<Document> documentsUserFollow = documentRepository.findTop20ByStatusDeleteAndDocsPublicInUsersIdOrderByCreatedAtDescAndQuantityLikeDesc((byte) 0, (byte) 1, usersId);
+        documentsUser.addAll(documentsUserFollow);
+        List<String> tagsSuggest = getListTagsSuggested(documentsUser);
+        List<String> typeDocumentSuggest = getListTypeDocumentsSuggested(documentsUser);
+        String authorsSuggest = getListAuthorsSuggested(documentsUser);
+        return documentRepository.findAllByTagsAndTypesAndAuthorsNotInUsers(tagsSuggest, typeDocumentSuggest, authorsSuggest, user.getId() );
     }
 
-    private List<Document> getListDocumentHighStars(User user){
-        List<Long> usersId = getListIdUsers(user);
+    private String getListAuthorsSuggested(List<Document> documents) {
+        StringBuffer listAuthorsBuffer = new StringBuffer();
+        if (documents != null && documents.size() > 0) {
+            for (int i = 0; i < documents.size(); i++) {
+                if (i < documents.size() - 1) {
+                    listAuthorsBuffer.append(documents.get(i).getAuthors());
+                    listAuthorsBuffer.append(',');
+                }
+                if (i == documents.size() - 1) {
+                    listAuthorsBuffer.append(documents.get(i).getAuthors());
+                }
+            }
+        }
+        String[] authors = listAuthorsBuffer.toString().split(",");
+        HashMap<String, Integer> authorsListMap = new HashMap<>();
+        for (String author : authors) {
+            String trimmedAuthor = author.trim();
+            if (!trimmedAuthor.isEmpty()) {
+                authorsListMap.put(trimmedAuthor, authorsListMap.getOrDefault(trimmedAuthor, 0) + 1);
+            }
+        }
+        List<String> sortedAuthors =  sortedMapValueFieldsDocument(authorsListMap);
+        StringBuffer strAuthors = new StringBuffer();
+        for(int i = 0; i < sortedAuthors.size(); i++) {
+            if(i < sortedAuthors.size() - 1){
+                strAuthors.append(sortedAuthors.get(i));
+                strAuthors.append(",");
+            }
+            if(i == sortedAuthors.size() - 1){
+                strAuthors.append(sortedAuthors.get(i));
+            }
+        }
+        return strAuthors.toString();
+    }
+
+    private List<String> getListTagsSuggested(List<Document> documents) {
+        HashMap<String, Integer> tagsSuggest = new HashMap<>();
+        for (Document doc : documents) {
+            List<Tag> tagDocuments = tagRepository.findAllByDocument(doc);
+            for (Tag tag : tagDocuments) {
+                tagsSuggest.put(tag.getTagName(), tagsSuggest.getOrDefault(tag.getTagName(), 0) + 1);
+            }
+        }
+        return sortedMapValueFieldsDocument(tagsSuggest);
+
+    }
+
+    private List<String> getListTypeDocumentsSuggested(List<Document> documents) {
+        HashMap<String, Integer> typeDocumentsSuggest = new HashMap<>();
+        for (Document doc : documents) {
+            List<TypeDocument> tagDocuments = typeDocumentRepository.findAllByDocument(doc);
+            for (TypeDocument typeDocument : tagDocuments) {
+                typeDocumentsSuggest.put(typeDocument.getTypeName(), typeDocumentsSuggest.getOrDefault(typeDocument.getTypeName(), 0) + 1);
+            }
+        }
+        return sortedMapValueFieldsDocument(typeDocumentsSuggest);
+    }
+
+    private List<String> sortedMapValueFieldsDocument(HashMap<String, Integer> mapDataFields) {
+        List<Map.Entry<String, Integer>> listAuthors = new ArrayList<>(mapDataFields.entrySet());
+        listAuthors.sort((entry1, entry2) -> entry2.getValue().compareTo(entry1.getValue()));
+        List<String> authorsListSorted = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : listAuthors) {
+            authorsListSorted.add(entry.getKey());
+        }
+        return authorsListSorted.subList(0, Math.min(authorsListSorted.size(), 10));
+    }
+
+
+    private List<Document> getListDocumentHighStars(User user) {
+        List<Long> usersId = getListIdUsersFollowing(user);
         return documentRepository.findTop10ByOrderByQuantityLikeDescUpdatedAtDescAndNotUsers(usersId);
     }
 
-    private List<Long> getListIdUsers(User user){
+    private List<Long> getListIdUsersFollowing(User user) {
         List<Follow> usersFollowing = followRepository.findAllByFollower(user);
         List<Long> users = new ArrayList<>();
-        users.add(user.getId());
-        for(Follow follow : usersFollowing){
+        for (Follow follow : usersFollowing) {
             users.add(follow.getFollowingId());
         }
         return users;
@@ -328,9 +435,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public boolean updateLovedDocument(String documentKey) {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(documentKey, user, (byte) 0);
-            if(document != null){
+            if (document != null) {
                 document.setLoved(document.getLoved() == 0 ? (byte) 1 : (byte) 0);
                 documentRepository.save(document);
                 return true;
@@ -340,29 +447,29 @@ public class DocumentServiceImpl implements DocumentService {
         return false;
     }
 
+    //    @Override
+//    public boolean updatePublicDocument(String documentKey) {
+//        User user = baseUtils.getUser();
+//        if(user != null){
+//            Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(documentKey, user, (byte) 0);
+//            if(document != null){
+//                document.setDocsPublic(document.getDocsPublic() == 0 ? (byte) 1 : (byte) 0);
+//                documentRepository.save(document);
+//                return true;
+//            }
+//            return true;
+//        }
+//        return false;
+//    }
     @Override
-    public boolean updatePublicDocument(String documentKey) {
+    public boolean moveToTrash(List<String> listDocumentKeys) {
         User user = baseUtils.getUser();
-        if(user != null){
-            Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(documentKey, user, (byte) 0);
-            if(document != null){
-                document.setDocsPublic(document.getDocsPublic() == 0 ? (byte) 1 : (byte) 0);
-                documentRepository.save(document);
-                return true;
-            }
-            return true;
-        }
-        return false;
-    }
-    @Override
-    public boolean moveToTrash(List<String> listDocumentKey) {
-        User user =  baseUtils.getUser();
-        if(user != null){
-            boolean check = baseUtils.checkDocument(listDocumentKey, (byte) 0);
-            if(check){
-                for(String keyName : listDocumentKey){
+        if (user != null) {
+            boolean check = baseUtils.checkDocument(listDocumentKeys, (byte) 0);
+            if (check) {
+                for (String keyName : listDocumentKeys) {
                     Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(keyName, user, (byte) 0);
-                    if(document != null){
+                    if (document != null) {
                         document.setStatusDelete((byte) 1);
                         document.setUpdatedAt(new Date());
                         documentRepository.save(document);
@@ -377,54 +484,54 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public boolean deleteDocument(List<String> listDocumentKey) {
         boolean check = baseUtils.checkDocument(listDocumentKey, (byte) 1);
-        if(check){
-            for(String keyName : listDocumentKey){
+        if (check) {
+            for (String keyName : listDocumentKey) {
                 User user = baseUtils.getUser();
-                if(user != null){
-                    Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete( keyName, user, (byte) 1);
-                    if(document != null){
-                        if(collectionHasDocumentRepository.existsByDocumentId(document.getId())){
+                if (user != null) {
+                    Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(keyName, user, (byte) 1);
+                    if (document != null) {
+                        if (collectionHasDocumentRepository.existsByDocumentId(document.getId())) {
                             List<CollectionHasDocument> collectionHasDocuments = collectionHasDocumentRepository.findByDocumentId(document.getId());
-                            if(collectionHasDocuments != null && !collectionHasDocuments.isEmpty()){
-                               collectionHasDocumentRepository.deleteAll(collectionHasDocuments);
+                            if (collectionHasDocuments != null && !collectionHasDocuments.isEmpty()) {
+                                collectionHasDocumentRepository.deleteAll(collectionHasDocuments);
                             }
                         }
-                        if(urlRepository.existsByDocument(document)){
+                        if (urlRepository.existsByDocument(document)) {
                             List<Url> urls = urlRepository.findAllByDocument(document);
-                            if(urls != null && !urls.isEmpty()){
+                            if (urls != null && !urls.isEmpty()) {
                                 urlRepository.deleteAll(urls);
                             }
                         }
-                        if(tagRepository.existsByDocument(document)){
+                        if (tagRepository.existsByDocument(document)) {
                             List<Tag> tags = tagRepository.findAllByDocument(document);
-                            if(tags != null && !tags.isEmpty()){
+                            if (tags != null && !tags.isEmpty()) {
                                 tagRepository.deleteAll(tags);
                             }
                         }
-                        if(typeDocumentRepository.existsByDocument(document)){
+                        if (typeDocumentRepository.existsByDocument(document)) {
                             List<TypeDocument> typeDocuments = typeDocumentRepository.findAllByDocument(document);
-                            if(typeDocuments != null && !typeDocuments.isEmpty()){
+                            if (typeDocuments != null && !typeDocuments.isEmpty()) {
                                 typeDocumentRepository.deleteAll(typeDocuments);
                             }
                         }
-                        if(documentShareUserRepository.existsByDocument(document)){
+                        if (documentShareUserRepository.existsByDocument(document)) {
                             List<DocumentShareUser> documentShareUsers = documentShareUserRepository.findAllByDocument(document);
-                            if(documentShareUsers!= null &&!documentShareUsers.isEmpty()){
+                            if (documentShareUsers != null && !documentShareUsers.isEmpty()) {
                                 documentShareUserRepository.deleteAll(documentShareUsers);
                             }
                         }
-                        if(groupHasDocumentRepository.existsByDocument(document)){
+                        if (groupHasDocumentRepository.existsByDocument(document)) {
                             List<GroupHasDocument> groupHasDocuments = groupHasDocumentRepository.findAllByDocument(document);
-                            if(groupHasDocuments != null && !groupHasDocuments.isEmpty()){
+                            if (groupHasDocuments != null && !groupHasDocuments.isEmpty()) {
                                 groupHasDocumentRepository.deleteAll(groupHasDocuments);
                             }
                         }
                         documentRepository.delete(document);
                         awsS3Utils.deleteFileFromS3Bucket(user.getRootPath(), document.getDocumentKey(), "document");
-                    }else{
+                    } else {
                         return false;
                     }
-                }else{
+                } else {
                     return false;
                 }
             }
@@ -435,8 +542,8 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public boolean undoDocument(List<String> listDocumentKey) {
         boolean check = baseUtils.checkDocument(listDocumentKey, (byte) 1);
-        if(check){
-            for(String keyName : listDocumentKey){
+        if (check) {
+            for (String keyName : listDocumentKey) {
                 User user = baseUtils.getUser();
                 Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(keyName, user, (byte) 1);
                 document.setStatusDelete((byte) 0);
@@ -450,7 +557,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public boolean editDocumentByKey(String documentKey, DocumentEditModel documentEditModel) {
         User user = baseUtils.getUser();
-        if(user!= null) {
+        if (user != null) {
             Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(documentKey, user, (byte) 0);
             if (document != null) {
                 Document newDocument = modelMapperUtils.mapAllProperties(documentEditModel.getDocumentModel(), Document.class);
@@ -463,52 +570,68 @@ public class DocumentServiceImpl implements DocumentService {
 
                 // tags
                 List<Tag> tags = tagRepository.findAllByDocument(document);
-                if(documentEditModel.getTags() != null && !documentEditModel.getTags().isEmpty()){
-                    if(tags != null && !tags.isEmpty()){
+                if (documentEditModel.getTags() != null && !documentEditModel.getTags().isEmpty()) {
+                    if (tags != null && !tags.isEmpty()) {
                         List<String> oldListTags = new ArrayList<>();
-                        for(Tag tag : tags){
+                        for (Tag tag : tags) {
                             oldListTags.add(tag.getTagName());
                         }
                         List<String> oldListTagsDeleted = removeDuplicatesMultiList(documentEditModel.getTags(), oldListTags);
-                        if(oldListTagsDeleted != null && !oldListTagsDeleted.isEmpty()) {
-                            for(String oldTag : oldListTagsDeleted){
-                                tagService.deleteTag(documentKey, oldTag);
+                        if (oldListTagsDeleted != null && !oldListTagsDeleted.isEmpty()) {
+                            for (String oldTag : oldListTagsDeleted) {
+                                Tag tag = tagRepository.findByTagNameAndDocument(oldTag, document);
+                                if (tag != null) {
+                                    tagRepository.delete(tag);
+                                }
                             }
                         }
-                        List<String> newListTags  = removeDuplicatesMultiList(oldListTags, documentEditModel.getTags());
-                        if(newListTags != null && !newListTags.isEmpty()){
-                            for(String newTag : newListTags){
-                                tagService.createTag(documentKey, newTag);
+                        List<String> newListTags = removeDuplicatesMultiList(oldListTags, documentEditModel.getTags());
+                        if (newListTags != null && !newListTags.isEmpty()) {
+                            for (String newTag : newListTags) {
+                                if (!tagRepository.existsByTagNameAndDocument(newTag, document)) {
+                                    Tag tag = new Tag();
+                                    tag.setTagName(newTag);
+                                    tag.setDocument(document);
+                                    tagRepository.save(tag);
+                                }
                             }
                         }
 
-                    }else{
-                        for(String newTag : documentEditModel.getTags()){
-                            tagService.createTag(documentKey, newTag);
+                    } else {
+                        for (String newTag : documentEditModel.getTags()) {
+                            if (!tagRepository.existsByTagNameAndDocument(newTag, document)) {
+                                Tag tag = new Tag();
+                                tag.setTagName(newTag);
+                                tag.setDocument(document);
+                                tagRepository.save(tag);
+                            }
                         }
                     }
-                }else{
-                    if(tags != null && !tags.isEmpty()){
+                } else {
+                    if (tags != null && !tags.isEmpty()) {
                         tagRepository.deleteAll(tags);
                     }
                 }
                 // type docs
                 List<TypeDocument> typeDocuments = typeDocumentRepository.findAllByDocument(document);
-                if(documentEditModel.getTypesDoc() != null && !documentEditModel.getTypesDoc().isEmpty()){
-                    if(typeDocuments != null && !typeDocuments.isEmpty()){
+                if (documentEditModel.getTypesDoc() != null && !documentEditModel.getTypesDoc().isEmpty()) {
+                    if (typeDocuments != null && !typeDocuments.isEmpty()) {
                         List<String> oldTypesDocs = new ArrayList<>();
-                        for (TypeDocument typeDocument : typeDocuments){
+                        for (TypeDocument typeDocument : typeDocuments) {
                             oldTypesDocs.add(typeDocument.getTypeName());
                         }
                         List<String> newTypesDocs = removeDuplicatesMultiList(oldTypesDocs, documentEditModel.getTypesDoc());
                         List<String> oldTypesDeleted = removeDuplicatesMultiList(documentEditModel.getTypesDoc(), oldTypesDocs);
-                        if(oldTypesDeleted!= null &&!oldTypesDeleted.isEmpty()){
-                            for(String oldTypeDelete : oldTypesDeleted){
-                                typeDocumentService.deleteTypeDocument(documentKey, oldTypeDelete);
+                        if (oldTypesDeleted != null && !oldTypesDeleted.isEmpty()) {
+                            for (String oldTypeDelete : oldTypesDeleted) {
+                                TypeDocument typeDocument = typeDocumentRepository.findByDocumentAndTypeName(document, oldTypeDelete);
+                                if (typeDocument != null) {
+                                    typeDocumentRepository.delete(typeDocument);
+                                }
                             }
                         }
-                        if(newTypesDocs != null && !newTypesDocs.isEmpty()){
-                            for(String typeName : newTypesDocs){
+                        if (newTypesDocs != null && !newTypesDocs.isEmpty()) {
+                            for (String typeName : newTypesDocs) {
                                 TypeDocument typeDocument = new TypeDocument();
                                 typeDocument.setTypeName(typeName);
                                 typeDocument.setDocument(document);
@@ -516,16 +639,16 @@ public class DocumentServiceImpl implements DocumentService {
                             }
                         }
 
-                    }else{
-                        for(String typeName : documentEditModel.getTypesDoc()){
+                    } else {
+                        for (String typeName : documentEditModel.getTypesDoc()) {
                             TypeDocument typeDocument = new TypeDocument();
                             typeDocument.setTypeName(typeName);
                             typeDocument.setDocument(document);
                             typeDocumentRepository.save(typeDocument);
                         }
                     }
-                }else{
-                    if(typeDocuments != null && !typeDocuments.isEmpty()){
+                } else {
+                    if (typeDocuments != null && !typeDocuments.isEmpty()) {
                         typeDocumentRepository.deleteAll(typeDocuments);
                     }
                 }
@@ -537,44 +660,68 @@ public class DocumentServiceImpl implements DocumentService {
         return false;
     }
 
+    //    @Override
+//    public boolean updateInformationDocument(String documentKey, DocumentModel documentModel) {
+//        User user = baseUtils.getUser();
+//        if(user != null){
+//            Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(documentKey, user, (byte) 0);
+//            if(document != null){
+//                Document newDocument = modelMapperUtils.mapAllProperties(documentModel, Document.class);
+//                newDocument.setId(document.getId());
+//                newDocument.setQuantityLike(document.getQuantityLike());
+//                newDocument.setUpdatedAt(new Date());
+//                newDocument.setCreatedAt(document.getCreatedAt());
+//                documentRepository.save(newDocument);
+//                return true;
+//            }
+//            return false;
+//        }
+//      return false;
+//    }
     @Override
-    public boolean updateInformationDocument(String documentKey, DocumentModel documentModel) {
+    public boolean updateLovedListDocuments(List<String> listDocumentKeys) {
         User user = baseUtils.getUser();
-        if(user != null){
-            Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(documentKey, user, (byte) 0);
-            if(document != null){
-                Document newDocument = modelMapperUtils.mapAllProperties(documentModel, Document.class);
-                newDocument.setId(document.getId());
-                newDocument.setQuantityLike(document.getQuantityLike());
-                newDocument.setUpdatedAt(new Date());
-                newDocument.setCreatedAt(document.getCreatedAt());
-                documentRepository.save(newDocument);
-                return true;
+        if (user != null) {
+            for (String key : listDocumentKeys) {
+                Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(key, user, (byte) 0);
+                if (document != null) {
+                    document.setLoved((byte) 1);
+                    documentRepository.save(document);
+                }
             }
-            return false;
+            return true;
         }
-      return false;
+        return false;
     }
+
     @Override
-    public boolean updateInformationListDocument(List<DocumentModel> listDataDocumentRequest) {
+    public boolean updatePublicListDocuments(List<String> listDocumentKeys) {
         User user = baseUtils.getUser();
-        if(user != null){
-            List<String> listDocumentKey = listDataDocumentRequest.stream()
-                    .map(DocumentModel::getDocumentKey)
-                    .collect(Collectors.toList());
-           if(baseUtils.checkDocument(listDocumentKey, (byte) 0)){
-               for(String key : listDocumentKey){
-                   Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(key, user, (byte) 0);
-                   if(document != null){
-                       document.setDocsPublic(document.getDocsPublic());
-                       document.setLoved(document.getLoved());
-                       document.setUpdatedAt(new Date());
-                       documentRepository.save(document);
-                       return true;
-                   }
-               }
-           }
-           return false;
+        if (user != null) {
+            for (String key : listDocumentKeys) {
+                Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(key, user, (byte) 0);
+                if (document != null) {
+                    document.setDocsPublic((byte) 1);
+                    documentRepository.save(document);
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean updateCompletedListDocument(List<String> listDocumentKeys) {
+        User user = baseUtils.getUser();
+        if (user != null) {
+            for (String key : listDocumentKeys) {
+                Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(key, user, (byte) 0);
+                if (document != null) {
+                    document.setDocsStatus((byte) 1);
+                    documentRepository.save(document);
+                }
+            }
+            return true;
         }
         return false;
     }
@@ -585,23 +732,25 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Async
-    protected CompletableFuture<String> getNameDocument(MultipartFile multipartFile){
+    protected CompletableFuture<String> getDocumentKeyFromAWS(MultipartFile multipartFile) {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             String url = awsS3Utils.uploadFileDocument(multipartFile, user.getRootPath() + "document/");
             String documentKey = url.substring(url.lastIndexOf("/") + 1);
             return CompletableFuture.completedFuture(documentKey);
         }
         return null;
     }
+
     @Async
-    public CompletableFuture<DocumentModel> getResultDocumentModelFromPDF(MultipartFile multipartFile){
+    protected CompletableFuture<DocumentModel> getResultDocumentModelFromPDF(MultipartFile multipartFile) {
         return CompletableFuture.completedFuture(searchDataDocsBySerApi(multipartFile));
     }
-    private DocumentModel searchDataDocsBySerApi(MultipartFile multipartFile){
+
+    private DocumentModel searchDataDocsBySerApi(MultipartFile multipartFile) {
         HashMap<String, String> resultMap = extractDataFileUtils.extractData(multipartFile);
-        if(resultMap != null && resultMap.containsKey("title")) {
-            if(resultMap.get("title") != null){
+        if (resultMap != null && resultMap.containsKey("title")) {
+            if (resultMap.get("title") != null) {
                 String query = resultMap.get("title").replaceAll("\\s+", " ").trim();
                 return getDataDocumentFromTitle(query, resultMap, 0);
             }
@@ -609,7 +758,20 @@ public class DocumentServiceImpl implements DocumentService {
         return null;
     }
 
-    private DocumentModel getDataDocumentFromTitle(String query, HashMap<String, String> resultMap, int check ){
+    @Async
+    protected CompletableFuture<String> hashcodeDocuments(MultipartFile file) {
+        try {
+            byte[] fileBytes = file.getBytes();
+            String docsHashCode = DigestUtils.sha256Hex(fileBytes);
+            return CompletableFuture.completedFuture(docsHashCode);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return CompletableFuture.completedFuture(null);
+        }
+    }
+
+
+    private DocumentModel getDataDocumentFromTitle(String query, HashMap<String, String> resultMap, int check) {
         if (query != null && query.length() > 5) {
             MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
             queryParams.add("api_key", apiKey);
@@ -619,9 +781,10 @@ public class DocumentServiceImpl implements DocumentService {
                     .build()
                     .toUriString();
             String response = restTemplate.getForObject(url, String.class);
-            if(response != null){
+            if (response != null) {
                 JSONObject obj = new JSONObject(response);
-                if (obj.has("profiles")) {
+                int has_link = 0;
+                while (obj.has("profiles") && has_link < 2) {
                     JSONObject objQuery = obj.getJSONObject("profiles");
                     if (objQuery.has("link")) {
                         String suggestUrl = objQuery.getString("link");
@@ -646,50 +809,59 @@ public class DocumentServiceImpl implements DocumentService {
                                     .toUriString();
                             String secondResponse = restTemplate.getForObject(secondUrl, String.class);
                             JSONObject secondObj = new JSONObject();
-                            if(secondResponse != null){
+                            if (secondResponse != null) {
                                 secondObj = new JSONObject(secondResponse);
+                                if (secondObj.has("profiles")) {
+                                    JSONObject objQueryProfiles = obj.getJSONObject("profiles");
+                                    if (objQueryProfiles.has("link")) {
+                                        obj = secondObj;
+                                        ++has_link;
+                                        continue;
+                                    }
+                                }
                             }
                             resultMap.put("title", qValue);
                             return getDataDocumentModel(secondObj, resultMap, check);
                         } catch (MalformedURLException e) {
                             log.info(e.getMessage());
-                            if(check == 0 && resultMap.containsKey("title2")){
-                                if(resultMap.get("title2") != null){
+                            has_link = 2;
+                            if (check == 0 && resultMap.containsKey("title2")) {
+                                if (resultMap.get("title2") != null) {
                                     String query2 = resultMap.get("title2").replaceAll("\\s+", " ").trim();
                                     return getDataDocumentFromTitle(query2, resultMap, 1);
                                 }
-                            }else{
-                               return getDataDocumentModel(null, resultMap, 1);
+                            } else {
+                                return getDataDocumentModel(null, resultMap, 1);
                             }
                         }
                     }
                 }
-                if(check == 0){
-                    DocumentModel documentModel =  getDataDocumentModel(obj, resultMap, 0);
-                    if(documentModel.getTitle() == null){
+                if (check == 0) {
+                    DocumentModel documentModel = getDataDocumentModel(obj, resultMap, 0);
+                    if (documentModel.getTitle() == null) {
                         return getDataDocumentModel(obj, resultMap, 1);
                     }
                     return documentModel;
-                }else if(check == 1){
+                } else if (check == 1) {
                     return getDataDocumentModel(obj, resultMap, 1);
                 }
             }
         }
-        if(check == 0 && resultMap.get("title2") != null){
+        if (check == 0 && resultMap.get("title2") != null) {
             String query2 = resultMap.get("title2").replaceAll("\\s+", " ").trim();
             return getDataDocumentFromTitle(query2, resultMap, 1);
         }
         return getDataDocumentModel(null, resultMap, check);
     }
 
-    private DocumentModel getDataDocumentModel(JSONObject response, HashMap<String, String> query, int checkResult){
+    private DocumentModel getDataDocumentModel(JSONObject response, HashMap<String, String> query, int checkResult) {
         DocumentModel docModel = new DocumentModel();
-        if(response != null && response.has("organic_results")) {
+        if (response != null && response.has("organic_results")) {
             JSONArray arrResults = response.getJSONArray("organic_results");
             if (arrResults.length() > 0) {
                 for (int i = 0; i < arrResults.length(); i++) {
                     JSONObject data = arrResults.getJSONObject(i);
-                    if(data.has("title")) {
+                    if (data.has("title")) {
                         String title = data.getString("title");
                         String newQuery = query.get("title").toLowerCase().replaceAll("[^a-zA-Z0-9]", "").trim();
                         String newTitle = title.toLowerCase().replaceAll("[^a-zA-Z0-9]", "").trim();
@@ -738,20 +910,20 @@ public class DocumentServiceImpl implements DocumentService {
                 }
             }
         }
-        if(checkResult == 0){
-            if(query.containsKey("title2")){
-                if(query.get("title2") != null){
+        if (checkResult == 0) {
+            if (query.containsKey("title2")) {
+                if (query.get("title2") != null) {
                     String query2 = query.get("title2").replaceAll("\\s+", " ").trim();
                     return getDataDocumentFromTitle(query2, query, 1);
                 }
             }
         }
         try {
-            if(query.get("title") != null){
+            if (query.get("title") != null) {
                 String decodedQuery = URLDecoder.decode(query.get("title"), StandardCharsets.UTF_8);
                 docModel.setTitle(decodedQuery);
             }
-            if(query.get("author") != null) {
+            if (query.get("author") != null) {
                 String decodedAuthor = URLDecoder.decode(query.get("author"), StandardCharsets.UTF_8);
                 docModel.setAuthors(decodedAuthor);
             }
@@ -764,20 +936,20 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private List<String> removeDuplicatesMultiList(List<String> fList, List<String> sList) {
-       if(fList != null && !fList.isEmpty()){
-           Set<String> fListSet = new HashSet<>(fList);
-           if( sList != null && !sList.isEmpty()){
-               List<String> result = new ArrayList<>();
-               for (String str :  sList){
-                   if(!fListSet.contains(str)){
-                       result.add(str);
-                   }
-               }
-               return result;
-           }
-           return fList;
-       }
-       return null;
+        if (fList != null && !fList.isEmpty()) {
+            Set<String> fListSet = new HashSet<>(fList);
+            if (sList != null && !sList.isEmpty()) {
+                List<String> result = new ArrayList<>();
+                for (String str : sList) {
+                    if (!fListSet.contains(str)) {
+                        result.add(str);
+                    }
+                }
+                return result;
+            }
+            return fList;
+        }
+        return null;
     }
 
 

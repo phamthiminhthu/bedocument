@@ -1,7 +1,5 @@
 package com.hust.edu.vn.dto;
 
-import com.hust.edu.vn.entity.LikeDocument;
-import com.hust.edu.vn.entity.TypeDocument;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -31,4 +29,5 @@ public class DocumentDto implements Serializable {
     private List<TypeDocumentDto> typeDocumentsList;
     private List<TagDto> tagDtoList;
     private Byte liked = 0;
+    private List<DocumentDto> documentsDtoSameHashcode;
 }

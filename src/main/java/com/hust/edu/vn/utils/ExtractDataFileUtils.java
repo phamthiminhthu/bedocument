@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 @Slf4j
@@ -34,7 +36,6 @@ public class ExtractDataFileUtils {
             PdfDocumentInfo info = pdfDoc.getDocumentInfo();
             String titleAvailable = info.getTitle();
             String authorAvailable = info.getAuthor();
-            resultAll.put("title", titleAvailable);
             resultAll.put("author", authorAvailable);
 
             for(int i=1; i<=3;  i++) {
@@ -59,27 +60,34 @@ public class ExtractDataFileUtils {
                         ++count;
                     }else{
                         boolean check = true;
+                        boolean stop = false;
                         ++count;
                         while(count < listResults.size() && check){
                             List<String> listTextSecond = listResults.get(count).getTextInfos();
                             StringBuffer sTitle = new StringBuffer();
                             boolean isBoldSecond = listResults.get(count).getIsBold();
                             if(isBold && fTitle.toString().trim().length() > 15 && !isBoldSecond){
-                                resultAll.put("title", title.append(fTitle).toString());
-                                return resultAll;
-                            }
-                            isBold = false;
-                            for (String itext : listTextSecond) {
-                                sTitle.append(itext);
-                            }
-                            if(fTitle.toString().toLowerCase().replaceAll("[^a-zA-Z0-9\\s]", "").trim().equals(sTitle.toString().toLowerCase().replaceAll("[^a-zA-Z0-9\\s]", "").trim())){
-                                ++count;
-                            }else{
+                                title.append(fTitle).toString();
                                 check = false;
-                                title.append(fTitle);
+                                stop = true;
                             }
+                           if(!stop){
+                               isBold = false;
+                               for (String itext : listTextSecond) {
+                                   sTitle.append(itext);
+                               }
+                               if(fTitle.toString().toLowerCase().replaceAll("[^a-zA-Z0-9\\s]", "").trim().equals(sTitle.toString().toLowerCase().replaceAll("[^a-zA-Z0-9\\s]", "").trim())){
+                                   ++count;
+                               }else{
+                                   check = false;
+                                   title.append(fTitle);
+                               }
+                           }
                         }
                         title.toString().trim();
+                        if(!check && stop) {
+                            break;
+                        }
                         if(title.toString().matches("\\s*")){
                             title.setLength(0);
                         }else{
@@ -94,21 +102,30 @@ public class ExtractDataFileUtils {
 
                 String resultSearch = title.toString().replaceAll("\\s+", " ");
                 String secondTitleFound = regexResult(resultSearch.replaceAll("(?i).*\\b(?:paper|whitepaper):\\s*", ""));
-                if(secondTitleFound.length() > 0 && titleAvailable != null){
-                    resultAll.put("title", secondTitleFound);
+                StringBuffer resultSecondTitleFound = new StringBuffer();
+                if(secondTitleFound.length() > 0) {
+                    Pattern pattern = Pattern.compile("(?<!^)(?=[A-Z])");
+                    Matcher matcher = pattern.matcher(secondTitleFound);
+                    while (matcher.find()) {
+                        matcher.appendReplacement(resultSecondTitleFound, " ");
+                    }
+                    matcher.appendTail(resultSecondTitleFound);
+                }
+                if(resultSecondTitleFound.toString().length() > 0 && titleAvailable != null){
+                    resultAll.put("title", resultSecondTitleFound.toString());
                     resultAll.put("title2", titleAvailable);
                     return resultAll;
                 }
-                if(titleAvailable != null){
-                    resultAll.put("title", titleAvailable);
+                if(resultSecondTitleFound.toString().length() > 0){
+                    resultAll.put("title", resultSecondTitleFound.toString());
                     return resultAll;
                 }
-                if(secondTitleFound.length() > 0){
-                    resultAll.put("title", secondTitleFound);
-                    return resultAll;
-                }
-                return null;
             }
+            if(titleAvailable != null){
+                resultAll.put("title", titleAvailable);
+                return resultAll;
+            }
+            return null;
         } catch (Exception e) {
             e.printStackTrace();
         }
