@@ -13,13 +13,14 @@ services:
       - ./tmp/db:/var/lib/mysql
       
   web:
-    # platform: linux/amd64
-    # image: phamthiminhthu2k0/docskanry
+    platform: linux/amd64
+#    image: phamthiminhthu2k0/docskanry
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "80:8080"  # Cổng 80 để dùng HTTP
+      # - "443:8443"
     depends_on:
       - db
     env_file:

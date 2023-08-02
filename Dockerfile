@@ -9,4 +9,7 @@ FROM openjdk:17
 WORKDIR /app
 COPY --from=build /app/target/beDocuments-0.0.1-SNAPSHOT.jar app.jar
 COPY .env ./
+COPY src/main/resources/keystore.p12 /app/keystore.p12
+COPY src/main/resources/keystore.p12 /app/keystore.jks
+EXPOSE 443
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

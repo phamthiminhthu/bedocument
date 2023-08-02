@@ -5,10 +5,8 @@ import com.hust.edu.vn.dto.DocumentDto;
 import com.hust.edu.vn.dto.UserDto;
 import com.hust.edu.vn.entity.Document;
 import com.hust.edu.vn.model.DocumentEditModel;
-import com.hust.edu.vn.model.DocumentModel;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
 import java.util.List;
 
 public interface DocumentService {

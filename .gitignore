@@ -52,3 +52,4 @@ atlassian-ide-plugin.xml
 # VS Code
 .vscode/
 tmp
+keystore.p12
