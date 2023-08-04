@@ -38,7 +38,7 @@ public class SecurityConfig {
                     @Override
                     public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                         CorsConfiguration corsConfiguration = new CorsConfiguration();
-                        corsConfiguration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://salmon-moss-0d24e4910.3.azurestaticapps.net"));
+                        corsConfiguration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://salmon-moss-0d24e4910.3.azurestaticapps.net", "https://3000-phamthiminh-fedocuments-za29hf3edhl.ws-us102.gitpod.io"));
                         corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
                         corsConfiguration.setAllowedHeaders(Arrays.asList("Content-Type", "Authorization"));
                         corsConfiguration.setExposedHeaders(Collections.singletonList("Authorization"));
