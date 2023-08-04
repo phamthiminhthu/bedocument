@@ -29,7 +29,6 @@ spring-test/test-output/
 .env
 
 # Maven artifacts
-pom.xml
 /target/
 
 # Eclipse artifacts, including WTP generated manifests
