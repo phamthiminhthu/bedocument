@@ -2,7 +2,7 @@ server:
     port: ${SERVER_PORT}
     ssl:
         enabled: true
-        key-store: classpath:keystore.p12
+        key-store: ${KEYSTORE_URL}
         key-store-password: ${SERVER_SSL_KEY_STORE_PASSWORD}
         keyStoreType: ${SERVER_SSL_KEY_STORE_TYPE}
 spring:

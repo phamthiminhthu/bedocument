@@ -13,7 +13,7 @@ services:
       - ./tmp/db:/var/lib/mysql
       
   web:
-    platform: linux/amd64
+#    platform: linux/amd64
 #    image: phamthiminhthu2k0/docskanry
     build:
       context: .
@@ -27,3 +27,5 @@ services:
       - .env
     environment:
       spring.datasource.url: "jdbc:mysql://db:3306/document?user=root&password=password&allowPublicKeyRetrieval=true&useSSL=false&createDatabaseIfNotExist=true&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION'&jdbcCompliantTruncation=false"
+    volumes:
+      - keystore.p12
