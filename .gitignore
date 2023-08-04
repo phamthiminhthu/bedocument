@@ -52,3 +52,5 @@ atlassian-ide-plugin.xml
 .vscode/
 tmp
 keystore.p12
+
+Dockerfile-dev
