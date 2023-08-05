@@ -13,11 +13,11 @@ services:
       - ./tmp/db:/var/lib/mysql
       
   web:
-#    platform: linux/amd64
+    platform: linux/amd64
 #    image: phamthiminhthu2k0/docskanry
     build:
       context: .
-      dockerfile: Dockerfile-dev
+      dockerfile: Dockerfile
     ports:
       - "80:8080"  # Cổng 80 để dùng HTTP
       # - "443:8443"
@@ -28,4 +28,5 @@ services:
     environment:
       spring.datasource.url: "jdbc:mysql://db:3306/document?user=root&password=password&allowPublicKeyRetrieval=true&useSSL=false&createDatabaseIfNotExist=true&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION'&jdbcCompliantTruncation=false"
     volumes:
-      - keystore.p12
+      - /Users/minhthu/Documents/DATN/code/documents/beDocuments/keystore.p12:/app/keystore.p12
+
