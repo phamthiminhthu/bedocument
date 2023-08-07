@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -69,5 +70,14 @@ public class Document {
 
     @Column(name = "updated_at", nullable = false)
     private Date updatedAt = new Date();
+
+//    @OneToMany(fetch = FetchType.LAZY, mappedBy = "id", cascade = CascadeType.REMOVE)
+//    private List<Tag> tags;
+//
+//    @OneToMany(fetch = FetchType.LAZY, mappedBy = "id", cascade = CascadeType.REMOVE)
+//    private List<TypeDocument> typeDocuments;
+//
+//    @OneToMany(fetch = FetchType.LAZY, mappedBy = "id", cascade = CascadeType.REMOVE)
+//    private List<Url> urls;
 
 }

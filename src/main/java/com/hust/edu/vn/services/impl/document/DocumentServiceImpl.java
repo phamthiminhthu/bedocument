@@ -182,7 +182,7 @@ public class DocumentServiceImpl implements DocumentService {
             Document document = documentRepository.findByDocumentKeyAndStatusDelete(documentKey, (byte) 0);
             if (document != null) {
                 if (document.getDocsPublic() == 1 || document.getUser() == user || documentShareUserRepository.existsByUserAndDocument(user, document) || groupHasDocumentRepository.existsUserInGroupWithDocument(user, document)) {
-                    return baseUtils.getDocumentDto(document);
+                    return modelMapperUtils.mapAllProperties(document, DocumentDto.class);
                 }
                 return null;
             }
@@ -230,11 +230,11 @@ public class DocumentServiceImpl implements DocumentService {
                 List<DocumentDto> documentDtoList = new ArrayList<>();
                 for (Document document : documentList) {
                     if (likeDocumentRepository.existsByUserAndDocument(currentUser, document)) {
-                        DocumentDto documentDto = baseUtils.getDocumentDto(document);
+                        DocumentDto documentDto = modelMapperUtils.mapAllProperties(document, DocumentDto.class);
                         documentDto.setLiked((byte) 1);
                         documentDtoList.add(documentDto);
                     } else {
-                        DocumentDto documentDto = baseUtils.getDocumentDto(document);
+                        DocumentDto documentDto = modelMapperUtils.mapAllProperties(document, DocumentDto.class);
                         documentDtoList.add(documentDto);
                     }
                 }
@@ -307,10 +307,14 @@ public class DocumentServiceImpl implements DocumentService {
             List<Document> documentsSuggest = getDocumentSuggested(user);
             if (documentsSuggest != null && !documentsSuggest.isEmpty()) {
                 for (Document document : documentsSuggest) {
+                    boolean check = true;
                     for(Long id : usersIdFollowing){
-                        if(!Objects.equals(document.getUser().getId(), id)){
-                            userDtoList.add(modelMapperUtils.mapAllProperties(document.getUser(), UserDto.class));
+                        if(Objects.equals(document.getUser().getId(), id)){
+                            check = false;
                         }
+                    }
+                    if(check){
+                        userDtoList.add(modelMapperUtils.mapAllProperties(document.getUser(), UserDto.class));
                     }
                 }
             }

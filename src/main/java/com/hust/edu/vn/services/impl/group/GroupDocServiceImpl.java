@@ -1,7 +1,7 @@
 package com.hust.edu.vn.services.impl.group;
 
-import com.hust.edu.vn.dto.CollectionDto;
-import com.hust.edu.vn.dto.DocumentDto;
+//import com.hust.edu.vn.dto.CollectionDto;
+//import com.hust.edu.vn.dto.DocumentDto;
 import com.hust.edu.vn.dto.GroupDocDto;
 import com.hust.edu.vn.dto.UserDto;
 import com.hust.edu.vn.entity.*;
@@ -70,25 +70,25 @@ public class GroupDocServiceImpl implements GroupDocService {
             GroupDoc groupDoc = baseUtils.getGroupDoc(user, groupId);
             if (groupDoc != null) {
                 GroupDocDto groupDocDto = modelMapperUtils.mapAllProperties(groupDoc, GroupDocDto.class);
-                List<Collection> collectionList = collectionRepository.findAllByGroupDocIdAndParentCollectionId(groupId, null);
-                List<CollectionDto> collectionDtoList = new ArrayList<>();
-                if (collectionList != null && !collectionList.isEmpty()) {
-                    for (Collection collection : collectionList) {
-                        collectionDtoList.add(modelMapperUtils.mapAllProperties(collection, CollectionDto.class));
-                    }
-                }
-                groupDocDto.setCollectionDtoList(collectionDtoList);
-                List<GroupHasDocument> groupHasDocumentList = groupHasDocumentRepository.findAllByGroupId(groupId);
-                List<DocumentDto> documentDtoList = new ArrayList<>();
-                if (groupHasDocumentList != null && !groupHasDocumentList.isEmpty()) {
-                    for (GroupHasDocument groupHasDocument : groupHasDocumentList) {
-                        DocumentDto documentDto = documentService.getDocumentModel(groupHasDocument.getDocument().getDocumentKey());
-                        if (documentDto != null) {
-                            documentDtoList.add(documentDto);
-                        }
-                    }
-                }
-                groupDocDto.setDocumentDtoList(documentDtoList);
+//                List<Collection> collectionList = collectionRepository.findAllByGroupDocIdAndParentCollectionId(groupId, null);
+//                List<CollectionDto> collectionDtoList = new ArrayList<>();
+//                if (collectionList != null && !collectionList.isEmpty()) {
+//                    for (Collection collection : collectionList) {
+//                        collectionDtoList.add(modelMapperUtils.mapAllProperties(collection, CollectionDto.class));
+//                    }
+//                }
+//                groupDocDto.setCollectionDtoList(collectionDtoList);
+//                List<GroupHasDocument> groupHasDocumentList = groupHasDocumentRepository.findAllByGroupId(groupId);
+//                List<DocumentDto> documentDtoList = new ArrayList<>();
+//                if (groupHasDocumentList != null && !groupHasDocumentList.isEmpty()) {
+//                    for (GroupHasDocument groupHasDocument : groupHasDocumentList) {
+//                        DocumentDto documentDto = documentService.getDocumentModel(groupHasDocument.getDocument().getDocumentKey());
+//                        if (documentDto != null) {
+//                            documentDtoList.add(documentDto);
+//                        }
+//                    }
+//                }
+//                groupDocDto.setDocumentDtoList(documentDtoList);
                 List<UserDto> userDtoList = new ArrayList<>();
                 List<GroupShareUser> groupShareUsers = groupShareUserRepository.findAllByGroupId(groupId);
                 if (groupShareUsers != null && groupShareUsers.size() > 0) {

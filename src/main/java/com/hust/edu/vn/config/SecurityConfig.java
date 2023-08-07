@@ -39,7 +39,7 @@ public class SecurityConfig {
                     @Override
                     public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                         CorsConfiguration corsConfiguration = new CorsConfiguration();
-                        corsConfiguration.setAllowedOrigins(List.of("*"));
+                        corsConfiguration.setAllowedOrigins(Arrays.asList("*", "http://localhost:3000", "http://docskanry.site"));
                         corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
                         corsConfiguration.setAllowedHeaders(Arrays.asList("Content-Type", "Authorization"));
                         corsConfiguration.setExposedHeaders(Collections.singletonList("Authorization"));

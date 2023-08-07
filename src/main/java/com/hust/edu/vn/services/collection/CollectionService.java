@@ -4,7 +4,6 @@ import com.hust.edu.vn.dto.CollectionDto;
 import com.hust.edu.vn.entity.Collection;
 import com.hust.edu.vn.model.CollectionModel;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
@@ -17,13 +16,12 @@ public interface CollectionService {
 
     CollectionDto showAllDetailsCollectionById(Long id, Long groupId);
 
-    List<CollectionDto> showAllCollectionParent();
+    List<CollectionDto> getAllCollectionsByUser();
 
     boolean renameCollection(Long id, String name);
 
     CollectionDto showCollectionById(Long id);
 
     List<CollectionDto> showAllNameCollectionWithoutGroupDoc();
-
 
 }

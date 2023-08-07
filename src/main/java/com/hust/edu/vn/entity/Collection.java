@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -40,5 +41,7 @@ public class Collection {
     @Column(name = "updated_at", nullable = false)
     private Date updatedAt = new Date();
 
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "parentCollectionId", cascade = CascadeType.REMOVE)
+    private List<Collection> subCollectionDtoList;
 
 }

@@ -16,7 +16,7 @@ import java.util.Date;
 
 public class TagDto implements Serializable {
     private Long id;
-    private DocumentDto document;
+//    private DocumentDto document;
     private String tagName;
     private Date createdAt;
     private Date updatedAt;

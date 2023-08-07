@@ -11,7 +11,7 @@ import java.util.Date;
 @Data
 public class UrlDto implements Serializable {
     private Long id;
-    private DocumentDto document;
+//    private DocumentDto document;
     private String url;
     private String description;
     private Date createdAt;

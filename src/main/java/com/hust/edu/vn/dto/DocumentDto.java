@@ -30,4 +30,5 @@ public class DocumentDto implements Serializable {
     private List<TagDto> tagDtoList;
     private Byte liked = 0;
     private List<DocumentDto> documentsDtoSameHashcode;
+
 }

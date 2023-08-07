@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -69,8 +70,8 @@ public class CollectionController {
     }
 
     @GetMapping("parent/show/all")
-    public ResponseEntity<CustomResponse> showAllCollectionParent(){
-        List<CollectionDto> results = collectionService.showAllCollectionParent();
+    public ResponseEntity<CustomResponse> getAllCollectionsByUser(){
+        List<CollectionDto> results = collectionService.getAllCollectionsByUser();
         if(results == null){
             return CustomResponse.generateResponse(HttpStatus.UNAUTHORIZED, "No users existed");
         }
@@ -118,6 +119,5 @@ public class CollectionController {
         }
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Delete Collection FAILED");
     }
-
 
 }

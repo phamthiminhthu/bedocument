@@ -241,7 +241,7 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
-    public List<CollectionDto> showAllCollectionParent() {
+    public List<CollectionDto> getAllCollectionsByUser() {
         User user = baseUtils.getUser();
         if(user != null){
             List<Collection> collectionList = collectionRepository.findAllByParentCollectionIdAndUserAndGroupDoc(null, user, null);
@@ -267,4 +267,5 @@ public class CollectionServiceImpl implements CollectionService {
         collectionIds.add(idCollection);
         return collectionIds;
     }
+
 }
