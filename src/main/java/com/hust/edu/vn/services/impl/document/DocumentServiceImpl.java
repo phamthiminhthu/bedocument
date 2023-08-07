@@ -307,10 +307,14 @@ public class DocumentServiceImpl implements DocumentService {
             List<Document> documentsSuggest = getDocumentSuggested(user);
             if (documentsSuggest != null && !documentsSuggest.isEmpty()) {
                 for (Document document : documentsSuggest) {
+                    boolean checked = true;
                     for(Long id : usersIdFollowing){
-                        if(!Objects.equals(document.getUser().getId(), id)){
-                            userDtoList.add(modelMapperUtils.mapAllProperties(document.getUser(), UserDto.class));
+                        if(Objects.equals(document.getUser().getId(), id)){
+                            checked = false;
                         }
+                    }
+                    if(checked){
+                        userDtoList.add(modelMapperUtils.mapAllProperties(document.getUser(), UserDto.class));
                     }
                 }
             }

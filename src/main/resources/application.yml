@@ -1,10 +1,10 @@
 server:
     port: ${SERVER_PORT}
-    ssl:
-        enabled: true
-        key-store: ${KEYSTORE_URL}
-        key-store-password: ${SERVER_SSL_KEY_STORE_PASSWORD}
-        keyStoreType: ${SERVER_SSL_KEY_STORE_TYPE}
+#    ssl:
+#        enabled: true
+#        key-store: ${KEYSTORE_URL}
+#        key-store-password: ${SERVER_SSL_KEY_STORE_PASSWORD}
+#        keyStoreType: ${SERVER_SSL_KEY_STORE_TYPE}
 spring:
     config:
         import: optional:file:.env[.properties]
