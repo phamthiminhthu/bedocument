@@ -69,42 +69,6 @@ public class BaseUtils {
         }
         return groupDoc;
     }
-
-//    public DocumentDto getDocumentDto(Document document){
-//
-//        if (document != null){
-//            DocumentDto documentModel = modelMapperUtils.mapAllProperties(document, DocumentDto.class);
-//            List<TagDto> tagDtoList = new ArrayList<>();
-//            List<Tag> tagList = tagRepository.findAllByDocument(document);
-//            if (tagList != null && !tagList.isEmpty()) {
-//                for (Tag tag : tagList) {
-//                    tagDtoList.add(modelMapperUtils.mapAllProperties(tag, TagDto.class));
-//                }
-//            }
-//            List<TypeDocument> listTypeDocument = typeDocumentRepository.findAllByDocument(document);
-//            List<TypeDocumentDto> typeDocumentDtoList = new ArrayList<>();
-//            if(listTypeDocument != null && !listTypeDocument.isEmpty()){
-//                for (TypeDocument typeDocument : listTypeDocument){
-//                    typeDocumentDtoList.add(modelMapperUtils.mapAllProperties(typeDocument, TypeDocumentDto.class));
-//                }
-//            }
-//
-//            List<Url> urlList = urlRepository.findAllByDocument(document);
-//            List<UrlDto> urlDtoList = new ArrayList<>();
-//            if(urlList != null && !urlList.isEmpty()){
-//                for(Url url : urlList){
-//                    urlDtoList.add(modelMapperUtils.mapAllProperties(url, UrlDto.class));
-//                }
-//            }
-//            documentModel.setTagDtoList(tagDtoList);
-//            documentModel.setTypeDocumentsList(typeDocumentDtoList);
-//            documentModel.setUrls(urlDtoList);
-//            return documentModel;
-//        }
-//        return null;
-//    }
-
-
     public List<DocumentDto> getListDocumentsDto(List<Document> documents){
         List<DocumentDto> documentDtoList = new ArrayList<>();
         if(documents != null &&  !documents.isEmpty()){

@@ -1,15 +1,13 @@
 package com.hust.edu.vn.services.impl.collection;
 
-import com.hust.edu.vn.dto.CollectionDto;
-import com.hust.edu.vn.dto.DocumentDto;
+import com.hust.edu.vn.dto.*;
+import com.hust.edu.vn.entity.*;
 import com.hust.edu.vn.entity.Collection;
-import com.hust.edu.vn.entity.CollectionHasDocument;
-import com.hust.edu.vn.entity.GroupDoc;
-import com.hust.edu.vn.entity.User;
 import com.hust.edu.vn.model.CollectionModel;
 import com.hust.edu.vn.repository.CollectionHasDocumentRepository;
 import com.hust.edu.vn.repository.CollectionRepository;
 import com.hust.edu.vn.repository.GroupDocRepository;
+import com.hust.edu.vn.repository.GroupShareUserRepository;
 import com.hust.edu.vn.services.collection.CollectionService;
 import com.hust.edu.vn.services.document.DocumentService;
 import com.hust.edu.vn.utils.BaseUtils;
@@ -22,6 +20,7 @@ import java.util.*;
 @Service
 @Slf4j
 public class CollectionServiceImpl implements CollectionService {
+    private final GroupShareUserRepository groupShareUserRepository;
     private final GroupDocRepository groupDocRepository;
     private final CollectionRepository collectionRepository;
     private final ModelMapperUtils modelMapperUtils;
@@ -35,32 +34,39 @@ public class CollectionServiceImpl implements CollectionService {
     public CollectionServiceImpl(CollectionRepository collectionRepository, ModelMapperUtils modelMapperUtils,
                                  CollectionHasDocumentRepository collectionHasDocumentRepository,
                                  BaseUtils baseUtils, DocumentService documentService,
-                                 GroupDocRepository groupDocRepository) {
+                                 GroupDocRepository groupDocRepository,
+                                 GroupShareUserRepository groupShareUserRepository) {
         this.collectionRepository = collectionRepository;
         this.modelMapperUtils = modelMapperUtils;
         this.collectionHasDocumentRepository = collectionHasDocumentRepository;
         this.baseUtils = baseUtils;
         this.documentService = documentService;
         this.groupDocRepository = groupDocRepository;
+        this.groupShareUserRepository = groupShareUserRepository;
     }
 
     @Override
     public boolean createCollection(CollectionModel collectionModel) {
         User user = baseUtils.getUser();
         if (user != null) {
-            if(collectionRepository.existsByCollectionNameAndParentCollectionIdAndUserId(collectionModel.getCollectionName(), collectionModel.getParentCollectionId(), user.getId())){
+            if (collectionRepository.existsByCollectionNameAndParentCollectionIdAndGroupDocIdAndUserId(collectionModel.getCollectionName(), collectionModel.getParentCollectionId(), collectionModel.getGroupId(), user.getId())) {
                 return false;
             }
+
             Collection newCollection = modelMapperUtils.mapAllProperties(collectionModel, Collection.class);
             newCollection.setUser(user);
-            if(collectionModel.getGroupId() != null){
-                groupDocRepository.findById(collectionModel.getGroupId()).ifPresent(newCollection::setGroupDoc);
-                return false;
+            if (collectionModel.getGroupId() != null) {
+                GroupDoc groupDoc = groupDocRepository.findById(collectionModel.getGroupId()).orElse(null);
+                if (groupDoc != null) {
+                    newCollection.setGroupDoc(groupDoc);
+                } else {
+                    return false;
+                }
             }
-            if(collectionModel.getParentCollectionId() != null){
+            if (collectionModel.getParentCollectionId() != null) {
                 Collection collection = collectionRepository.findByIdAndUserId(collectionModel.getParentCollectionId(), user.getId());
-                if(collection != null){
-                    if(collectionModel.getGroupId() != null){
+                if (collection != null) {
+                    if (collectionModel.getGroupId() != null) {
                         GroupDoc groupDoc = groupDocRepository.findById(collectionModel.getGroupId()).orElse(null);
                         newCollection.setGroupDoc(groupDoc);
                     }
@@ -68,34 +74,34 @@ public class CollectionServiceImpl implements CollectionService {
                     return true;
                 }
                 return false;
-            }else{
+            } else {
                 collectionRepository.save(newCollection);
                 return true;
             }
         }
-       return false;
+        return false;
     }
 
-    @Override
-    public TreeMap<Long, List<Collection>> showCollection() {
-        User user = baseUtils.getUser();
-        if(user != null) {
-            List<Collection> listCollection = collectionRepository.findByUserIdAndGroupDoc(user.getId(), null);
-            TreeMap<Long, List<Collection>> result = new TreeMap<>();
-            if (listCollection.size() > 0) {
-                for (Collection collection : listCollection) {
-                    Long idParent = collection.getParentCollectionId();
-                    if (idParent != null) {
-                        collectionRepository.findById(idParent).ifPresent(collectionParent -> result.computeIfAbsent(collectionParent.getId(), k -> new ArrayList<>()).add(collection));
-                    } else {
-                        result.put(collection.getId(), null);
-                    }
-                }
-            }
-            return result;
-        }
-        return null;
-    }
+//    @Override
+//    public TreeMap<Long, List<Collection>> showCollection() {
+//        User user = baseUtils.getUser();
+//        if(user != null) {
+//            List<Collection> listCollection = collectionRepository.findByUserIdAndGroupDoc(user.getId(), null);
+//            TreeMap<Long, List<Collection>> result = new TreeMap<>();
+//            if (listCollection.size() > 0) {
+//                for (Collection collection : listCollection) {
+//                    Long idParent = collection.getParentCollectionId();
+//                    if (idParent != null) {
+//                        collectionRepository.findById(idParent).ifPresent(collectionParent -> result.computeIfAbsent(collectionParent.getId(), k -> new ArrayList<>()).add(collection));
+//                    } else {
+//                        result.put(collection.getId(), null);
+//                    }
+//                }
+//            }
+//            return result;
+//        }
+//        return null;
+//    }
 
 
 //    @Override
@@ -134,13 +140,13 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     public boolean renameCollection(Long id, String name) {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             Collection collection = collectionRepository.findByIdAndUser(id, user);
-            if(collection != null){
-                if(collection.getCollectionName().equals(name)){
+            if (collection != null) {
+                if (collection.getCollectionName().equals(name)) {
                     return true;
                 }
-                if(!collectionRepository.existsByCollectionNameAndParentCollectionIdAndUserId(name, collection.getParentCollectionId(), user.getId())){
+                if (!collectionRepository.existsByCollectionNameAndParentCollectionIdAndUserId(name, collection.getParentCollectionId(), user.getId())) {
                     collection.setCollectionName(name);
                     collection.setUpdatedAt(new Date());
                     collectionRepository.save(collection);
@@ -154,9 +160,9 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     public CollectionDto showCollectionById(Long id) {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             Collection collection = collectionRepository.findByIdAndUser(id, user);
-            if(collection != null){
+            if (collection != null) {
                 return modelMapperUtils.mapAllProperties(collection, CollectionDto.class);
             }
         }
@@ -166,13 +172,13 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     public List<CollectionDto> showAllNameCollectionWithoutGroupDoc() {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             List<Collection> collectionList = collectionRepository.findAllByUserAndGroupDoc(user, null);
             List<CollectionDto> collectionDtoList = new ArrayList<>();
-            if(collectionList != null && !collectionList.isEmpty()){
-                for(Collection collection : collectionList){
+            if (collectionList != null && !collectionList.isEmpty()) {
+                for (Collection collection : collectionList) {
                     CollectionDto collectionDto = modelMapperUtils.mapAllProperties(collection, CollectionDto.class);
-                    if(collection.getParentCollectionId() != null){
+                    if (collection.getParentCollectionId() != null) {
                         collectionRepository.findById(collection.getParentCollectionId()).ifPresent(parentCollection -> collectionDto.setParentCollectionName(parentCollection.getCollectionName()));
                     }
                     collectionDtoList.add(collectionDto);
@@ -185,19 +191,19 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Override
     public boolean deleteCollection(Long id) {
-        User user =  baseUtils.getUser();
-        if(user != null){
+        User user = baseUtils.getUser();
+        if (user != null) {
             Collection collection = collectionRepository.findByIdAndUserId(id, user.getId());
-            if(collection != null){
-                TreeMap<Long, List<Collection>> treeCollection = showCollection();
-                Set<Long> collectionIds = getListCollectionId(treeCollection, collection.getId());
-                for(Long subId : collectionIds){
-                    List<CollectionHasDocument> collectionHasDocuments = collectionHasDocumentRepository.findByCollectionIdAndDocumentStatusDelete(subId, (byte) 0);
-                    if(collectionHasDocuments != null && !collectionHasDocuments.isEmpty()){
-                        collectionHasDocumentRepository.deleteAll(collectionHasDocuments);
-                    }
-                    collectionRepository.deleteById(subId);
-                }
+            if (collection != null) {
+//                List<Collection> collectionList = collection.getSubCollectionDtoList();
+//                for (Collection subCollection : collectionList) {
+//                    List<CollectionHasDocument> collectionHasDocuments = collectionHasDocumentRepository.findByCollectionAndDocumentStatusDelete(subCollection, (byte) 0);
+//                    if (collectionHasDocuments != null && !collectionHasDocuments.isEmpty()) {
+//                        collectionHasDocumentRepository.deleteAll(collectionHasDocuments);
+//                    }
+//                }
+//                collectionRepository.deleteAll(collectionList);
+                collectionRepository.delete(collection);
                 return true;
             }
             return false;
@@ -208,28 +214,28 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     public CollectionDto showAllDetailsCollectionById(Long id, Long groupId) {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             Collection collection = collectionRepository.findById(id).orElse(null);
             CollectionDto collectionDto = modelMapperUtils.mapAllProperties(collection, CollectionDto.class);
             List<Collection> subCollections;
-            if(groupId == null){
+            if (groupId == null) {
                 subCollections = collectionRepository.findAllByParentCollectionIdAndUser(collectionDto.getId(), user);
-            }else{
+            } else {
                 subCollections = collectionRepository.findAllByParentCollectionIdAndGroupDocId(collectionDto.getId(), groupId);
             }
             List<CollectionDto> subCollectionDtoList = new ArrayList<>();
-           if(subCollections != null && subCollections.size() > 0){
-               for(Collection collection1 : subCollections){
-                   subCollectionDtoList.add(modelMapperUtils.mapAllProperties(collection1, CollectionDto.class));
-               }
-           }
+            if (subCollections != null && subCollections.size() > 0) {
+                for (Collection collection1 : subCollections) {
+                    subCollectionDtoList.add(modelMapperUtils.mapAllProperties(collection1, CollectionDto.class));
+                }
+            }
             collectionDto.setSubCollectionDtoList(subCollectionDtoList);
             List<CollectionHasDocument> collectionHasDocuments = collectionHasDocumentRepository.findAllByCollectionOrderByCreatedAtDesc(collection);
             List<DocumentDto> documents = new ArrayList<>();
-            if(collectionHasDocuments != null && !collectionHasDocuments.isEmpty()){
-                for(CollectionHasDocument collectionHasDocument : collectionHasDocuments){
+            if (collectionHasDocuments != null && !collectionHasDocuments.isEmpty()) {
+                for (CollectionHasDocument collectionHasDocument : collectionHasDocuments) {
                     DocumentDto documentDto = documentService.getDocumentModel(collectionHasDocument.getDocument().getDocumentKey());
-                    if(documentDto != null){
+                    if (documentDto != null) {
                         documents.add(documentDto);
                     }
                 }
@@ -243,11 +249,11 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     public List<CollectionDto> getAllCollectionsByUser() {
         User user = baseUtils.getUser();
-        if(user != null){
+        if (user != null) {
             List<Collection> collectionList = collectionRepository.findAllByParentCollectionIdAndUserAndGroupDoc(null, user, null);
             List<CollectionDto> collectionDtoList = new ArrayList<>();
-            if(collectionList != null && !collectionList.isEmpty()){
-                for(Collection collection : collectionList){
+            if (collectionList != null && !collectionList.isEmpty()) {
+                for (Collection collection : collectionList) {
                     collectionDtoList.add(modelMapperUtils.mapAllProperties(collection, CollectionDto.class));
                 }
             }
@@ -256,16 +262,146 @@ public class CollectionServiceImpl implements CollectionService {
         return null;
     }
 
-    private Set<Long> getListCollectionId(TreeMap<Long, List<Collection>> data, Long idCollection){
-        Set<Long> collectionIds = new HashSet<>();
-        List<Collection> listSubCollection = data.get(idCollection);
-        if(listSubCollection != null && !listSubCollection.isEmpty()){
-            for (Collection subCollection : listSubCollection) {
-                collectionIds.addAll(getListCollectionId(data, subCollection.getId()));
+    @Override
+    public List<CollectionTreeDto> showDetailsAllCollections() {
+        User user = baseUtils.getUser();
+        if (user != null) {
+            List<Collection> collectionsList = collectionRepository.findByUserIdAndGroupDoc(user.getId(), null);
+//            List<CollectionTreeDto> collectionTreeDtoList = c
+//            if (collectionsList != null && collectionsList.size() > 0) {
+//                for (Collection collection : collectionsList) {
+//                    if (collection.getParentCollectionId() == null) {
+//                        collectionTreeDtoList.add(modelMapperUtils.mapAllProperties(collection, CollectionTreeDto.class));
+//                    }
+//                }
+//            }
+            return convertCollectionsToCollectionTreeDtoList(collectionsList);
+        }
+        return null;
+    }
+
+    @Override
+    public List<GroupDocTreeDto> showDetailsAllCollectionsByGroup() {
+        User user = baseUtils.getUser();
+        if (user != null) {
+            List<GroupDoc> groupDocs = groupDocRepository.findAllByUser(user);
+            List<GroupShareUser> groupShareUsers = groupShareUserRepository.findAllByUser(user);
+            if (groupShareUsers != null && groupShareUsers.size() > 0) {
+                for (GroupShareUser groupShareUser : groupShareUsers) {
+                    groupDocs.add(groupShareUser.getGroup());
+                }
+            }
+            List<GroupDocTreeDto> groupDocTreeDtoList = new ArrayList<>();
+            if (groupDocs != null && groupDocs.size() > 0) {
+                groupDocs.sort(Comparator.comparing(GroupDoc::getCreatedAt));
+                for (GroupDoc groupDoc : groupDocs) {
+                    GroupDocTreeDto groupDocTreeDto = new GroupDocTreeDto();
+                    groupDocTreeDto.setGroupName(groupDoc.getGroupName());
+                    groupDocTreeDto.setId(groupDoc.getId());
+                    List<Collection> collectionsListGroupDoc = collectionRepository.findByGroupDoc(groupDoc);
+                    List<CollectionTreeDto> collectionTreeDtoList = convertCollectionsToCollectionTreeDtoList(collectionsListGroupDoc);
+                    groupDocTreeDto.setCollectionDtoList(collectionTreeDtoList);
+                    groupDocTreeDtoList.add(groupDocTreeDto);
+                }
+            }
+            return groupDocTreeDtoList;
+        }
+        return null;
+    }
+
+    @Override
+    public List<CollectionTreeDto> showBreadcrumbsCollectionsById(Long idCollection, Long idGroup) {
+        User user = baseUtils.getUser();
+        if (user != null) {
+            List<CollectionTreeDto> result = new ArrayList<>();
+            if (idCollection != null && idGroup != null) {
+                GroupDoc groupDoc = baseUtils.getGroupDoc(user, idGroup);
+                if(groupDoc != null){
+                    Collection collection = collectionRepository.findByIdAndGroupDocId(idCollection, idGroup);
+                    if(collection != null){
+                        List<Collection> collectionsList = collectionRepository.findByUserIdAndGroupDocId(user.getId(), idGroup);
+                        List<CollectionTreeDto> collectionTreeDtoList = convertCollectionsToCollectionTreeDtoList(collectionsList);
+                        CollectionTreeDto collectionTreeDto = new CollectionTreeDto();
+                        collectionTreeDto.setCollectionName(groupDoc.getGroupName());
+                        collectionTreeDto.setId(groupDoc.getId());
+                        result.add(collectionTreeDto);
+                        List<CollectionTreeDto> collectionTreeDtoList1 = getListCollectionTreeDtoList(collectionTreeDtoList, idCollection);
+                        if(collectionTreeDtoList1 != null && collectionTreeDtoList1.size() > 0){
+                            result.addAll(collectionTreeDtoList1);
+                        }
+                        return result;
+                    }
+                }
+                return null;
+            }
+
+            if(idGroup != null){
+                GroupDoc groupDoc = baseUtils.getGroupDoc(user, idGroup);
+                if(groupDoc != null){
+                    CollectionTreeDto collectionTreeDto = new CollectionTreeDto();
+                    collectionTreeDto.setCollectionName(groupDoc.getGroupName());
+                    collectionTreeDto.setId(groupDoc.getId());
+                    result.add(collectionTreeDto);
+                    return result;
+                }
+                return null;
+            }
+
+            if(idCollection != null){
+                Collection collection = collectionRepository.findByIdAndUserId(idCollection, user.getId());
+                if(collection != null){
+                    List<Collection> collectionsList = collectionRepository.findByUserIdAndGroupDocId(user.getId(), null);
+                    List<CollectionTreeDto> collectionTreeDtoList = convertCollectionsToCollectionTreeDtoList(collectionsList);
+                    return  getListCollectionTreeDtoList(collectionTreeDtoList, idCollection);
+                }
+                return null;
             }
         }
-        collectionIds.add(idCollection);
-        return collectionIds;
+        return null;
+    }
+
+    private List<CollectionTreeDto> getListCollectionTreeDtoList(List<CollectionTreeDto> collectionTreeDtoList, Long idCollection){
+        List<CollectionTreeDto> result;
+        for(CollectionTreeDto collectionTreeDto : collectionTreeDtoList){
+            result = findArrayCollectionTreeDto(collectionTreeDto, idCollection);
+            if( result != null && result.size() > 0){
+                return result;
+            }
+        }
+        return null;
+    }
+
+    private List<CollectionTreeDto> findArrayCollectionTreeDto(CollectionTreeDto collectionTreeDto, Long idCollection){
+        if(Objects.equals(idCollection, collectionTreeDto.getId())){
+            List<CollectionTreeDto> result = new ArrayList<>();
+            result.add(collectionTreeDto);
+            return result;
+        }
+        if(collectionTreeDto.getSubCollectionDtoList() != null && collectionTreeDto.getSubCollectionDtoList().size() > 0){
+            for(CollectionTreeDto collectionTreeDto1 : collectionTreeDto.getSubCollectionDtoList()){
+                List<CollectionTreeDto> result = findArrayCollectionTreeDto(collectionTreeDto1, idCollection);
+                if( result != null && result.size() > 0){
+                    List<CollectionTreeDto> result2 = new ArrayList<>();
+                    result2.add(collectionTreeDto);
+                    result2.addAll(result);
+                    return result2;
+                }
+
+            }
+        }
+        return null;
+    }
+
+    private List<CollectionTreeDto> convertCollectionsToCollectionTreeDtoList(List<Collection> collectionsList) {
+        List<CollectionTreeDto> collectionTreeDtoList = new ArrayList<>();
+        if (collectionsList != null && collectionsList.size() > 0) {
+            for (Collection collection : collectionsList) {
+                if (collection.getParentCollectionId() == null) {
+                    collectionTreeDtoList.add(modelMapperUtils.mapAllProperties(collection, CollectionTreeDto.class));
+                }
+            }
+        }
+        return collectionTreeDtoList;
     }
 
 }

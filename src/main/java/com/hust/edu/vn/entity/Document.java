@@ -71,13 +71,12 @@ public class Document {
     @Column(name = "updated_at", nullable = false)
     private Date updatedAt = new Date();
 
-//    @OneToMany(fetch = FetchType.LAZY, mappedBy = "id", cascade = CascadeType.REMOVE)
-//    private List<Tag> tags;
-//
-//    @OneToMany(fetch = FetchType.LAZY, mappedBy = "id", cascade = CascadeType.REMOVE)
-//    private List<TypeDocument> typeDocuments;
-//
-//    @OneToMany(fetch = FetchType.LAZY, mappedBy = "id", cascade = CascadeType.REMOVE)
-//    private List<Url> urls;
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "document", cascade = CascadeType.REMOVE)
+    private List<Tag> tags;
 
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "document", cascade = CascadeType.REMOVE)
+    private List<TypeDocument> typeDocumentsList;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "document", cascade = CascadeType.REMOVE)
+    private List<Url> urls;
 }

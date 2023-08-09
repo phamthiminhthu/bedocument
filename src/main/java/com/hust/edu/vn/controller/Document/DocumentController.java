@@ -72,15 +72,7 @@ public class DocumentController {
         }
         return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Update failed");
     }
-//
-//    @PostMapping("update/{documentKey}")
-//    public ResponseEntity<CustomResponse> updateInformationDocument(@PathVariable(value="documentKey") String documentKey, @RequestBody DocumentModel documentModel){
-//        boolean status = documentService.updateInformationDocument(documentKey, documentModel);
-//        if(status){
-//            return CustomResponse.generateResponse(HttpStatus.OK, "Update successfully");
-//        }
-//        return CustomResponse.generateResponse(HttpStatus.BAD_REQUEST, "Update failed");
-//    }
+
     @PostMapping("update/multi-documents/loved")
     public ResponseEntity<CustomResponse> updateLovedListDocument(@RequestBody List<String> listDocumentKeys){
         boolean status = documentService.updateLovedListDocuments(listDocumentKeys);

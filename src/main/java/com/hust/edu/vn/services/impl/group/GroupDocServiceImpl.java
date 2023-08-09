@@ -2,6 +2,7 @@ package com.hust.edu.vn.services.impl.group;
 
 //import com.hust.edu.vn.dto.CollectionDto;
 //import com.hust.edu.vn.dto.DocumentDto;
+import com.hust.edu.vn.dto.DocumentDto;
 import com.hust.edu.vn.dto.GroupDocDto;
 import com.hust.edu.vn.dto.UserDto;
 import com.hust.edu.vn.entity.*;
@@ -23,17 +24,13 @@ public class GroupDocServiceImpl implements GroupDocService {
     private final GroupDocRepository groupDocRepository;
     private final ModelMapperUtils modelMapperUtils;
     private final GroupShareUserRepository groupShareUserRepository;
-    private final GroupHasDocumentRepository groupHasDocumentRepository;
-    private final CollectionRepository collectionRepository;
     private final BaseUtils baseUtils;
     private final DocumentService documentService;
 
-    public GroupDocServiceImpl(GroupDocRepository groupDocRepository, ModelMapperUtils modelMapperUtils, GroupShareUserRepository groupShareUserRepository, GroupHasDocumentRepository groupHasDocumentRepository, CollectionRepository collectionRepository, BaseUtils baseUtils, DocumentService documentService) {
+    public GroupDocServiceImpl(GroupDocRepository groupDocRepository, ModelMapperUtils modelMapperUtils, GroupShareUserRepository groupShareUserRepository, BaseUtils baseUtils, DocumentService documentService) {
         this.groupDocRepository = groupDocRepository;
         this.modelMapperUtils = modelMapperUtils;
         this.groupShareUserRepository = groupShareUserRepository;
-        this.groupHasDocumentRepository = groupHasDocumentRepository;
-        this.collectionRepository = collectionRepository;
         this.baseUtils = baseUtils;
         this.documentService = documentService;
     }
@@ -78,19 +75,19 @@ public class GroupDocServiceImpl implements GroupDocService {
 //                    }
 //                }
 //                groupDocDto.setCollectionDtoList(collectionDtoList);
-//                List<GroupHasDocument> groupHasDocumentList = groupHasDocumentRepository.findAllByGroupId(groupId);
-//                List<DocumentDto> documentDtoList = new ArrayList<>();
-//                if (groupHasDocumentList != null && !groupHasDocumentList.isEmpty()) {
-//                    for (GroupHasDocument groupHasDocument : groupHasDocumentList) {
-//                        DocumentDto documentDto = documentService.getDocumentModel(groupHasDocument.getDocument().getDocumentKey());
-//                        if (documentDto != null) {
-//                            documentDtoList.add(documentDto);
-//                        }
-//                    }
-//                }
-//                groupDocDto.setDocumentDtoList(documentDtoList);
+                List<GroupHasDocument> groupHasDocumentList = groupDoc.getGroupHasDocuments();
+                List<DocumentDto> documentDtoList = new ArrayList<>();
+                if (groupHasDocumentList != null && !groupHasDocumentList.isEmpty()) {
+                    for (GroupHasDocument groupHasDocument : groupHasDocumentList) {
+                        DocumentDto documentDto = documentService.getDocumentModel(groupHasDocument.getDocument().getDocumentKey());
+                        if (documentDto != null) {
+                            documentDtoList.add(documentDto);
+                        }
+                    }
+                }
+                groupDocDto.setDocumentDtoList(documentDtoList);
                 List<UserDto> userDtoList = new ArrayList<>();
-                List<GroupShareUser> groupShareUsers = groupShareUserRepository.findAllByGroupId(groupId);
+                List<GroupShareUser> groupShareUsers = groupDoc.getGroupShareUsers();
                 if (groupShareUsers != null && groupShareUsers.size() > 0) {
                     for (GroupShareUser groupShareUser : groupShareUsers) {
                         User groupUser = groupShareUser.getUser();
@@ -134,9 +131,9 @@ public class GroupDocServiceImpl implements GroupDocService {
         if (user != null) {
             GroupDoc groupDoc = groupDocRepository.findByIdAndUser(groupId, user);
             if (groupDoc != null) {
-                groupHasDocumentRepository.deleteByGroupId(groupDoc.getId());
-                groupShareUserRepository.deleteByGroupId(groupDoc.getId());
-                collectionRepository.deleteByGroupDocId(groupDoc.getId());
+//                groupHasDocumentRepository.deleteByGroupId(groupDoc.getId());
+//                groupShareUserRepository.deleteByGroupId(groupDoc.getId());
+//                collectionRepository.deleteByGroupDocId(groupDoc.getId());
                 groupDocRepository.delete(groupDoc);
                 return true;
             }

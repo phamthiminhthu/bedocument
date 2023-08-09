@@ -27,7 +27,7 @@ public class DocumentDto implements Serializable {
 
     private List<UrlDto> urls;
     private List<TypeDocumentDto> typeDocumentsList;
-    private List<TagDto> tagDtoList;
+    private List<TagDto> tags;
     private Byte liked = 0;
     private List<DocumentDto> documentsDtoSameHashcode;
 

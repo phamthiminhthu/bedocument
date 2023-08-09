@@ -78,24 +78,4 @@ public class CollectionHasDocumentController {
     }
 
 
-//    record DocumentCollection(List<String> listDocumentKey, List<Long> listCollectionId){
-//        public List<String> getListDocumentKey(){
-//            return listDocumentKey;
-//        }
-//        public List<Long> getListCollectionId() { return listCollectionId; }
-//    }
-//
-//
-//    @PostMapping("move")
-//    public ResponseEntity<CustomResponse> moveDocumentCollection(@PathVariable(value = "collectionId") Long collectionId, @RequestBody DocumentCollection documentCollection){
-//        boolean status = collectionHasDocumentService.moveDocumentCollection(collectionId, documentCollection.getListDocumentKey(), documentCollection.getListCollectionId());
-//        if(status){
-//            return CustomResponse.generateResponse(HttpStatus.OK, "Move Document successfully");
-//        }
-//        return CustomResponse.generateResponse(HttpStatus.OK, "Move Document failed");
-//    }
-
-
-
-
 }

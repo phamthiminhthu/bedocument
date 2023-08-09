@@ -44,4 +44,6 @@ public class Collection {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "parentCollectionId", cascade = CascadeType.REMOVE)
     private List<Collection> subCollectionDtoList;
 
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "collection", cascade = CascadeType.REMOVE)
+    private List<CollectionHasDocument> subCollectionDocuments;
 }

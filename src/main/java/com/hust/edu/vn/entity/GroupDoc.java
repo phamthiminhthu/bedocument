@@ -37,4 +37,13 @@ public class GroupDoc {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "groupDoc", cascade = CascadeType.REMOVE)
     private List<Collection> collectionDtoList;
 
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "group", cascade = CascadeType.REMOVE)
+    private List<GroupHasDocument> groupHasDocuments;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy="group", cascade = CascadeType.REMOVE)
+    private List<GroupShareUser> groupShareUsers;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy="group", cascade = CascadeType.REMOVE)
+    private List<InvitationMember> invitationMembers;
+
 }

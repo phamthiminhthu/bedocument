@@ -1,16 +1,15 @@
 package com.hust.edu.vn.services.collection;
 
 import com.hust.edu.vn.dto.CollectionDto;
-import com.hust.edu.vn.entity.Collection;
+import com.hust.edu.vn.dto.CollectionTreeDto;
+import com.hust.edu.vn.dto.GroupDocTreeDto;
 import com.hust.edu.vn.model.CollectionModel;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.TreeMap;
 
 public interface CollectionService {
     boolean createCollection(CollectionModel collectionModel);
-    TreeMap<Long, List<Collection>> showCollection();
+//    TreeMap<Long, List<Collection>> showCollection();
 //    boolean updateCollection(Long id, CollectionModel collectionModel);
     boolean deleteCollection(Long id);
 
@@ -24,4 +23,9 @@ public interface CollectionService {
 
     List<CollectionDto> showAllNameCollectionWithoutGroupDoc();
 
+    List<CollectionTreeDto> showDetailsAllCollections();
+
+    List<GroupDocTreeDto> showDetailsAllCollectionsByGroup();
+
+    List<CollectionTreeDto> showBreadcrumbsCollectionsById(Long idCollection, Long idGroup);
 }

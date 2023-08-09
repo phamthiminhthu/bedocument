@@ -14,13 +14,9 @@ public interface CollectionRepository extends JpaRepository<Collection, Long> {
 
     boolean existsByCollectionNameAndParentCollectionIdAndUserId(String collectionName, Long parentCollectionId,  Long userId);
 
-    boolean existsByIdAndUserId(Long parentCollectionId, Long id);
-
     List<Collection> findByUserIdAndGroupDoc(Long id, Object o);
 
     boolean existsByGroupDocAndCollectionNameAndParentCollectionId(GroupDoc groupDoc, String collectionName, Long id);
-
-    void deleteByGroupDocId(Long id);
 
     List<Collection> findAllByGroupDocId(Long groupId);
 
@@ -36,7 +32,13 @@ public interface CollectionRepository extends JpaRepository<Collection, Long> {
 
     List<Collection> findAllByParentCollectionIdAndGroupDocId(Long id, Long groupId);
 
-    List<Collection> findAllByGroupDocIdAndParentCollectionId(Long groupId, Object o);
-
     boolean existsByIdAndGroupDoc(Long parentCollectionId, GroupDoc groupDoc);
+
+    boolean existsByCollectionNameAndParentCollectionIdAndGroupDocIdAndUserId(String collectionName, Long parentCollectionId, Long groupId, Long id);
+
+    List<Collection> findByGroupDoc(GroupDoc groupDoc);
+
+    Collection findByIdAndGroupDocId(Long idCollection, Long idGroup);
+
+    List<Collection> findByUserIdAndGroupDocId(Long id, Long idGroup);
 }

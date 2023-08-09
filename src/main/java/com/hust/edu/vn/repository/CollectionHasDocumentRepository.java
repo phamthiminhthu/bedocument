@@ -19,8 +19,6 @@ public interface CollectionHasDocumentRepository extends JpaRepository<Collectio
 
     boolean existsByCollectionAndDocument(Collection newCollection, Document document);
 
-    boolean existsByDocumentDocumentKeyAndCollectionIdAndCollectionUser(String key, Long id, User user);
-
     List<CollectionHasDocument> findAllByCollectionOrderByCreatedAtDesc(Collection collection);
 
     List<CollectionHasDocument> findByCollection(Collection collection);
@@ -37,4 +35,6 @@ public interface CollectionHasDocumentRepository extends JpaRepository<Collectio
     boolean existsMultipleCollectionHasDocumentsByDocumentAndGroup(Document document, GroupDoc groupDoc);
 
     CollectionHasDocument findByDocumentAndCollectionId(Document document, Long collectionId);
+
+    List<CollectionHasDocument> findByCollectionAndDocumentStatusDelete(Collection subCollection, byte b);
 }

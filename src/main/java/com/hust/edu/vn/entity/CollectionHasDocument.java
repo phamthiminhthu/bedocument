@@ -30,5 +30,4 @@ public class CollectionHasDocument {
 
     @Column(name = "updated_at", nullable = false)
     private Date updatedAt = new Date();
-
 }
