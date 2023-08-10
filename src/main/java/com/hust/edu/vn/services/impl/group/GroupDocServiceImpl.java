@@ -2,6 +2,7 @@ package com.hust.edu.vn.services.impl.group;
 
 //import com.hust.edu.vn.dto.CollectionDto;
 //import com.hust.edu.vn.dto.DocumentDto;
+
 import com.hust.edu.vn.dto.DocumentDto;
 import com.hust.edu.vn.dto.GroupDocDto;
 import com.hust.edu.vn.dto.UserDto;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -67,21 +69,22 @@ public class GroupDocServiceImpl implements GroupDocService {
             GroupDoc groupDoc = baseUtils.getGroupDoc(user, groupId);
             if (groupDoc != null) {
                 GroupDocDto groupDocDto = modelMapperUtils.mapAllProperties(groupDoc, GroupDocDto.class);
-//                List<Collection> collectionList = collectionRepository.findAllByGroupDocIdAndParentCollectionId(groupId, null);
-//                List<CollectionDto> collectionDtoList = new ArrayList<>();
-//                if (collectionList != null && !collectionList.isEmpty()) {
-//                    for (Collection collection : collectionList) {
-//                        collectionDtoList.add(modelMapperUtils.mapAllProperties(collection, CollectionDto.class));
-//                    }
-//                }
-//                groupDocDto.setCollectionDtoList(collectionDtoList);
                 List<GroupHasDocument> groupHasDocumentList = groupDoc.getGroupHasDocuments();
                 List<DocumentDto> documentDtoList = new ArrayList<>();
                 if (groupHasDocumentList != null && !groupHasDocumentList.isEmpty()) {
-                    for (GroupHasDocument groupHasDocument : groupHasDocumentList) {
-                        DocumentDto documentDto = documentService.getDocumentModel(groupHasDocument.getDocument().getDocumentKey());
-                        if (documentDto != null) {
-                            documentDtoList.add(documentDto);
+                    if (Objects.equals(groupDoc.getUser().getId(), user.getId())) {
+                        for (GroupHasDocument groupHasDocument : groupHasDocumentList) {
+                            DocumentDto documentDto = modelMapperUtils.mapAllProperties(groupHasDocument.getDocument(), DocumentDto.class);
+                            if (documentDto != null) {
+                                documentDtoList.add(documentDto);
+                            }
+                        }
+                    } else {
+                        for (GroupHasDocument groupHasDocument : groupHasDocumentList) {
+                            DocumentDto documentDto = documentService.getDocumentModel(groupHasDocument.getDocument().getDocumentKey());
+                            if (documentDto != null) {
+                                documentDtoList.add(documentDto);
+                            }
                         }
                     }
                 }

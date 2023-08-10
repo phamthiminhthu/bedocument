@@ -14,7 +14,7 @@ public interface CollectionHasDocumentService {
 
     boolean updateCollectionDocument(Long oldCollectionIdFirst, Long newCollectionIdSecond, String documentKey);
 
-    boolean deleteCollectionDocument(Long collectionId, String documentKey);
+    boolean deleteCollectionDocument(Long collectionId, List<String> documentKeysListy);
 
     boolean moveDocumentToCollection(List<Long> idCollections, List<String> documentKeys);
 

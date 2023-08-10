@@ -52,8 +52,8 @@ public class CollectionHasDocumentController {
     }
 
     @PostMapping("delete")
-    public ResponseEntity<CustomResponse> deleteDocumentCollection(@RequestParam(value = "collectionId") Long collectionId, @RequestParam(value="documentKey") String documentKey){
-        boolean status = collectionHasDocumentService.deleteCollectionDocument(collectionId, documentKey);
+    public ResponseEntity<CustomResponse> deleteDocumentCollection(@RequestParam(value = "collectionId") Long collectionId, @RequestBody List<String> documentKeysList){
+        boolean status = collectionHasDocumentService.deleteCollectionDocument(collectionId, documentKeysList);
         if(status){
             return CustomResponse.generateResponse(HttpStatus.OK, "Delete document in collection successfully");
         }

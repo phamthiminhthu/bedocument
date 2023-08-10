@@ -3,13 +3,11 @@ package com.hust.edu.vn.services.impl.collection;
 import com.hust.edu.vn.dto.CollectionDto;
 import com.hust.edu.vn.dto.CollectionHasDocumentDto;
 import com.hust.edu.vn.dto.DocumentDto;
-import com.hust.edu.vn.entity.Collection;
-import com.hust.edu.vn.entity.CollectionHasDocument;
-import com.hust.edu.vn.entity.Document;
-import com.hust.edu.vn.entity.User;
+import com.hust.edu.vn.entity.*;
 import com.hust.edu.vn.repository.CollectionHasDocumentRepository;
 import com.hust.edu.vn.repository.CollectionRepository;
 import com.hust.edu.vn.repository.DocumentRepository;
+import com.hust.edu.vn.repository.GroupShareUserRepository;
 import com.hust.edu.vn.services.collection.CollectionHasDocumentService;
 import com.hust.edu.vn.services.document.DocumentService;
 import com.hust.edu.vn.utils.BaseUtils;
@@ -20,11 +18,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
 @Service
 @Slf4j
 public class CollectionHasDocumentImpl implements CollectionHasDocumentService {
+    private final GroupShareUserRepository groupShareUserRepository;
     private final DocumentRepository documentRepository;
     private final CollectionRepository collectionRepository;
     private final CollectionHasDocumentRepository collectionHasDocumentRepository;
@@ -35,13 +35,15 @@ public class CollectionHasDocumentImpl implements CollectionHasDocumentService {
 
     public CollectionHasDocumentImpl(CollectionHasDocumentRepository collectionHasDocumentRepository, DocumentService documentService,
                                      CollectionRepository collectionRepository, ModelMapperUtils modelMapperUtils,
-                                     DocumentRepository documentRepository, BaseUtils baseUtils) {
+                                     DocumentRepository documentRepository, BaseUtils baseUtils,
+                                     GroupShareUserRepository groupShareUserRepository) {
         this.collectionHasDocumentRepository = collectionHasDocumentRepository;
         this.documentService = documentService;
         this.baseUtils = baseUtils;
         this.collectionRepository = collectionRepository;
         this.modelMapperUtils = modelMapperUtils;
         this.documentRepository = documentRepository;
+        this.groupShareUserRepository = groupShareUserRepository;
     }
 
     @Override
@@ -113,19 +115,35 @@ public class CollectionHasDocumentImpl implements CollectionHasDocumentService {
     }
 
     @Override
-    public boolean deleteCollectionDocument(Long collectionId, String documentKey) {
+    public boolean deleteCollectionDocument(Long collectionId,  List<String> documentKeysList) {
         User user = baseUtils.getUser();
         if(user != null){
-            Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(documentKey, user, (byte) 0);
-            Collection collection = collectionRepository.findByIdAndUserId(collectionId, user.getId());
-            if(document != null && collection != null){
-                if(collectionHasDocumentRepository.existsByCollectionAndDocument(collection, document)){
-                    CollectionHasDocument collectionHasDocument = collectionHasDocumentRepository.findByCollectionAndDocument(collection, document);
-                    collectionHasDocumentRepository.delete(collectionHasDocument);
-//                    documentRepository.save(document);
-                    return true;
+            if(documentKeysList != null && documentKeysList.size() > 0){
+                for(String documentKey : documentKeysList){
+                    Document document = documentRepository.findByDocumentKeyAndUserAndStatusDelete(documentKey, user, (byte) 0);
+                    Collection collection = collectionRepository.findById(collectionId).orElse(null);
+                    boolean check = false;
+                    if(collection != null){
+                        if(!Objects.equals(collection.getUser().getId(), user.getId()) && collection.getGroupDoc() != null){
+                            GroupShareUser groupShareUser = groupShareUserRepository.findByUserAndGroupId(user, collection.getGroupDoc().getId());
+                            if(groupShareUser != null){
+                                check = true;
+                            }
+                        }
+                        else if(Objects.equals(collection.getUser().getId(), user.getId())){
+                            check = true;
+                        }
+                        if(check){
+                            if(collectionHasDocumentRepository.existsByCollectionAndDocument(collection, document)){
+                                CollectionHasDocument collectionHasDocument = collectionHasDocumentRepository.findByCollectionAndDocument(collection, document);
+                                collectionHasDocumentRepository.delete(collectionHasDocument);
+                            }
+                        }
+                    }
                 }
+                return true;
             }
+
         }
         return false;
     }
