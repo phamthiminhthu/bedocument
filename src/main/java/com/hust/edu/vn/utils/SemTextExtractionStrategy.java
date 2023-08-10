@@ -7,7 +7,6 @@ import com.itextpdf.kernel.pdf.canvas.parser.data.IEventData;
 import com.itextpdf.kernel.pdf.canvas.parser.data.TextRenderInfo;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.ITextExtractionStrategy;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.Text;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -15,7 +14,7 @@ import java.util.regex.Pattern;
 
 @Slf4j
 public class SemTextExtractionStrategy implements ITextExtractionStrategy {
-    private List<TextData> listTextRenderData = new ArrayList<TextData>();
+    private List<TextData> listTextRenderData = new ArrayList<>();
     @Override
     public String getResultantText() {
         return null;
@@ -28,7 +27,7 @@ public class SemTextExtractionStrategy implements ITextExtractionStrategy {
             TextRenderInfo renderInfo = (TextRenderInfo) iEventData;
             String fontName = renderInfo.getFont().getFontProgram().getFontNames().getFontName();
             String text = renderInfo.getText();
-            if((!fontName.contains("Symbol")) && (!fontName.contains("Wingdings")) && (!fontName.contains("New"))){
+            if(fontName != null && (!fontName.contains("Symbol")) && (!fontName.contains("Wingdings")) && (!fontName.contains("NewUnicode") && (!fontName.contains("Dingbats")) && !fontName.contains("FontAwesome"))){
                 String regex = "(?i).*bold.*";
                 Pattern pattern = Pattern.compile(regex);
                 Matcher matcher = pattern.matcher(fontName);

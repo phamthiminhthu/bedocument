@@ -63,8 +63,6 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     List<Document> findTop10ByOrderByQuantityLikeDescUpdatedAtDescAndNotUsers(List<Long> usersId);
     List<Document> findByUserAndStatusDeleteAndDocsHashcode(User user, byte b, String docsHashCode);
 
-    List<Document> findAllByUserAndDocsStatusAndLovedOrderByCreatedAtDesc(User user, byte b, byte b1);
-
     List<Document> findTop20ByUserAndStatusDeleteOrderByCreatedAtDesc(User user, byte b);
 
     @Query(""" 
@@ -77,4 +75,5 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
         """)
     List<Document> findTop20ByStatusDeleteAndDocsPublicInUsersIdOrderByCreatedAtDescAndQuantityLikeDesc(byte b, byte b1, List<Long> usersId);
 
+    List<Document> findAllByUserAndStatusDeleteAndLovedOrderByCreatedAtDesc(User user, byte b, byte b1);
 }

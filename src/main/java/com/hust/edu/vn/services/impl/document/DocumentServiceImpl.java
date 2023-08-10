@@ -204,7 +204,7 @@ public class DocumentServiceImpl implements DocumentService {
     public List<DocumentDto> getListDocumentLoved() {
         User user = baseUtils.getUser();
         if (user != null) {
-            List<Document> documentList = documentRepository.findAllByUserAndDocsStatusAndLovedOrderByCreatedAtDesc(user, (byte) 0, (byte) 1);
+            List<Document> documentList = documentRepository.findAllByUserAndStatusDeleteAndLovedOrderByCreatedAtDesc(user, (byte) 0, (byte) 1);
             return baseUtils.getListDocumentsDto(documentList);
         }
         return null;
