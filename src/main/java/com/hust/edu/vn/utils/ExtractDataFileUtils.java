@@ -3,6 +3,7 @@ package com.hust.edu.vn.utils;
 import com.hust.edu.vn.model.TextData;
 import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor;
+import com.itextpdf.kernel.pdf.canvas.parser.clipper.ClipperBridge;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,7 +38,7 @@ public class ExtractDataFileUtils {
             String titleAvailable = info.getTitle();
             String authorAvailable = info.getAuthor();
             resultAll.put("author", authorAvailable);
-
+            ClipperBridge.floatMultiplier = Math.pow(10, 10);
             for(int i=1; i<=3;  i++) {
                 SemTextExtractionStrategy strategy = new SemTextExtractionStrategy();
                 PdfTextExtractor.getTextFromPage(pdfDoc.getPage(i), strategy);

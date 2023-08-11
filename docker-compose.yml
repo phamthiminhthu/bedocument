@@ -13,8 +13,8 @@ services:
       - ./tmp/db:/var/lib/mysql
       
   web:
-#    platform: linux/amd64
-#    image: phamthiminhthu2k0/docskanry:http-be
+    platform: linux/amd64
+    image: phamthiminhthu2k0/docskanry:http-be
     build:
       context: .
       dockerfile: Dockerfile

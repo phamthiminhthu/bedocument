@@ -18,7 +18,3 @@ WORKDIR /app
 COPY --from=build /app/target/beDocuments-0.0.1-SNAPSHOT.jar app.jar
 COPY .env ./
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
-
-#KEYSTORE_URL=/app/keystore.p12
-#SERVER_SSL_KEY_STORE_PASSWORD=consaubeo
-#SERVER_SSL_KEY_STORE_TYPE=PKCS12
