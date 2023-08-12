@@ -2,7 +2,6 @@ package com.hust.edu.vn.controller.collection;
 
 import com.hust.edu.vn.common.type.CustomResponse;
 import com.hust.edu.vn.dto.CollectionHasDocumentDto;
-import com.hust.edu.vn.dto.DocumentDto;
 import com.hust.edu.vn.services.collection.CollectionHasDocumentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

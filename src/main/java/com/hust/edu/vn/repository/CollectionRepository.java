@@ -41,4 +41,6 @@ public interface CollectionRepository extends JpaRepository<Collection, Long> {
     Collection findByIdAndGroupDocId(Long idCollection, Long idGroup);
 
     List<Collection> findByUserIdAndGroupDocId(Long id, Long idGroup);
+
+    List<Collection> findByGroupDocId(Long idGroup);
 }

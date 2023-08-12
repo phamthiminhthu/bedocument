@@ -319,7 +319,7 @@ public class CollectionServiceImpl implements CollectionService {
                 if(groupDoc != null){
                     Collection collection = collectionRepository.findByIdAndGroupDocId(idCollection, idGroup);
                     if(collection != null){
-                        List<Collection> collectionsList = collectionRepository.findByUserIdAndGroupDocId(user.getId(), idGroup);
+                        List<Collection> collectionsList = collectionRepository.findByGroupDocId(idGroup);
                         List<CollectionTreeDto> collectionTreeDtoList = convertCollectionsToCollectionTreeDtoList(collectionsList);
                         CollectionTreeDto collectionTreeDto = new CollectionTreeDto();
                         collectionTreeDto.setCollectionName(groupDoc.getGroupName());
